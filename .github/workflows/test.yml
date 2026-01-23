@@ -11,10 +11,6 @@ jobs:
     name: Crypto Compatibility
     runs-on: macos-14
 
-    defaults:
-      run:
-        working-directory: ${{ github.workspace }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,6 +33,12 @@ jobs:
           cd node_modules/ts-algochat
           bun install
           bun run build
+
+      - name: Debug working directory
+        run: |
+          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
+          echo "PWD: $(pwd)"
+          ls -la
 
       - name: Build Swift
         run: swift build

@@ -11,6 +11,10 @@ jobs:
     name: Crypto Compatibility
     runs-on: macos-14
 
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,7 +33,10 @@ jobs:
         run: bun install
 
       - name: Build ts-algochat dependency
-        run: cd node_modules/ts-algochat && bun install && bun run build
+        run: |
+          cd node_modules/ts-algochat
+          bun install
+          bun run build
 
       - name: Build Swift
         run: swift build
@@ -43,7 +50,6 @@ jobs:
       - name: Verify cross-implementation decryption
         run: |
           echo "=== Cross-Implementation Verification ==="
-          # Swift exports envelope, TypeScript decrypts it
           swift run TestAlgoChat crypto
           bun test ts/crypto.test.ts --test-name-pattern "decrypt Swift"
           echo "✓ TypeScript successfully decrypted Swift envelope"

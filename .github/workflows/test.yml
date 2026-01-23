@@ -9,16 +9,11 @@ on:
 jobs:
   crypto-tests:
     name: Crypto Compatibility
-    runs-on: macos-14
+    runs-on: macos-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Swift
-        uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: '6.0'
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -33,12 +28,6 @@ jobs:
           cd node_modules/ts-algochat
           bun install
           bun run build
-
-      - name: Debug working directory
-        run: |
-          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
-          echo "PWD: $(pwd)"
-          ls -la
 
       - name: Build Swift
         run: swift build

@@ -28,6 +28,9 @@ jobs:
       - name: Install TypeScript dependencies
         run: bun install
 
+      - name: Build ts-algochat dependency
+        run: cd node_modules/ts-algochat && bun install && bun run build
+
       - name: Build Swift
         run: swift build
 

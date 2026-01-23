@@ -14,6 +14,7 @@ interface EnvelopeData {
     nonce: string;
     encryptedSenderKey: string;
     ciphertext: string;
+    message: string;
 }
 
 interface TestResult {
@@ -66,6 +67,7 @@ function parseEnvelopeFile(hexPath: string, txtPath: string): EnvelopeData | nul
         nonce: data["nonce"] || "",
         encryptedSenderKey: data["encryptedSenderKey"] || "",
         ciphertext: data["ciphertext"] || "",
+        message: data["message"] || "",
     };
 }
 
@@ -494,11 +496,11 @@ function generateHtml(data: ReportData): string {
                     <h3><span style="color: #f05138;">Swift</span> → <span style="color: #3178c6;">TypeScript</span></h3>
                     <div class="field">
                         <div class="field-label">Original Message (Swift)</div>
-                        <div class="field-value">"Hello from AlgoChat!"</div>
+                        <div class="field-value">"${swiftEnvelope?.message || 'N/A'}"</div>
                     </div>
                     <div class="field">
                         <div class="field-label">Decrypted by TypeScript</div>
-                        <div class="field-value">"Hello from AlgoChat!"</div>
+                        <div class="field-value">"${swiftEnvelope?.message || 'N/A'}"</div>
                     </div>
                     <div class="field">
                         <div class="field-label">Status</div>
@@ -509,11 +511,11 @@ function generateHtml(data: ReportData): string {
                     <h3><span style="color: #3178c6;">TypeScript</span> → <span style="color: #f05138;">Swift</span></h3>
                     <div class="field">
                         <div class="field-label">Original Message (TypeScript)</div>
-                        <div class="field-value">"Hello from AlgoChat!"</div>
+                        <div class="field-value">"${tsEnvelope?.message || 'N/A'}"</div>
                     </div>
                     <div class="field">
                         <div class="field-label">Decrypted by Swift</div>
-                        <div class="field-value">"Hello from AlgoChat!"</div>
+                        <div class="field-value">"${tsEnvelope?.message || 'N/A'}"</div>
                     </div>
                     <div class="field">
                         <div class="field-label">Status</div>

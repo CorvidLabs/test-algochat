@@ -61,8 +61,11 @@ public enum TestVectors {
 
     // MARK: - Test Messages
 
-    /// Simple text message for testing
-    public static let simpleMessage = "Hello from AlgoChat!"
+    /// Simple text message for testing (Swift → TypeScript direction)
+    public static let simpleMessage = "Hello from Swift! Testing cross-implementation encryption."
+
+    /// Message that TypeScript uses (TypeScript → Swift direction)
+    public static let tsMessage = "Greetings from TypeScript! Verifying bidirectional compatibility."
 
     /// Message with special characters
     public static let unicodeMessage = "Hello! \u{1F44B} Encrypted messaging on Algorand \u{1F512}"

@@ -224,6 +224,7 @@ private func runCryptoTests() async throws {
         encryptedSenderKey: \(envelope.encryptedSenderKey.hexString)
         ciphertext: \(envelope.ciphertext.hexString)
         full: \(encoded.hexString)
+        message: \(TestVectors.simpleMessage)
         """
         try components.write(toFile: "test-envelope-swift.txt", atomically: true, encoding: String.Encoding.utf8)
         print("  Saved components to test-envelope-swift.txt")
@@ -314,9 +315,9 @@ private func runLocalnetTests() async throws {
 
             print("  Decrypted message: \(content.text)")
 
-            // Verify it matches expected message
-            guard content.text == TestVectors.simpleMessage else {
-                throw TestError.assertion("Message mismatch: expected '\(TestVectors.simpleMessage)', got '\(content.text)'")
+            // Verify it matches expected TypeScript message
+            guard content.text == TestVectors.tsMessage else {
+                throw TestError.assertion("Message mismatch: expected '\(TestVectors.tsMessage)', got '\(content.text)'")
             }
 
             print("  \u{2713} Successfully decrypted TypeScript envelope")

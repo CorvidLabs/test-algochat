@@ -13,6 +13,7 @@ import {
     getBobKeys,
     deriveKeysFromSeed,
     SIMPLE_MESSAGE,
+    SWIFT_MESSAGE,
     UNICODE_MESSAGE,
     PROTOCOL,
     bytesToHex,
@@ -148,6 +149,7 @@ describe('Envelope Encoding', () => {
             `encryptedSenderKey: ${bytesToHex(envelope.encryptedSenderKey)}`,
             `ciphertext: ${bytesToHex(envelope.ciphertext)}`,
             `full: ${bytesToHex(encoded)}`,
+            `message: ${SIMPLE_MESSAGE}`,
         ].join('\n');
         writeFileSync('test-envelope-ts.txt', components);
 
@@ -239,7 +241,7 @@ describe('Cross-Implementation', () => {
         const decrypted = decryptMessage(envelope, bobKeys.privateKey, bobKeys.publicKey);
 
         expect(decrypted).not.toBeNull();
-        expect(decrypted!.text).toBe(SIMPLE_MESSAGE);
+        expect(decrypted!.text).toBe(SWIFT_MESSAGE);
         console.log(`  Decrypted: "${decrypted!.text}"`);
     });
 });

@@ -48,8 +48,9 @@ export function getBobKeys() {
     return deriveKeysFromSeed(BOB_SEED_HEX);
 }
 
-// Test messages
-export const SIMPLE_MESSAGE = 'Hello from AlgoChat!';
+// Test messages - different for each implementation to verify true bidirectional compatibility
+export const SIMPLE_MESSAGE = 'Greetings from TypeScript! Verifying bidirectional compatibility.';
+export const SWIFT_MESSAGE = 'Hello from Swift! Testing cross-implementation encryption.';
 export const UNICODE_MESSAGE = 'Hello! \u{1F44B} Encrypted messaging on Algorand \u{1F512}';
 export const LONG_MESSAGE = 'The quick brown fox jumps over the lazy dog. '.repeat(15);
 

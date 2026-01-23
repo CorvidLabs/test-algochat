@@ -44,3 +44,12 @@ jobs:
           swift run TestAlgoChat crypto
           bun test ts/crypto.test.ts --test-name-pattern "decrypt Swift"
           echo "✓ TypeScript successfully decrypted Swift envelope"
+
+      - name: Generate HTML report
+        run: bun scripts/generate-report.ts
+
+      - name: Upload test report
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: report.html

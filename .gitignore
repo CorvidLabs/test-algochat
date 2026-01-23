@@ -13,6 +13,7 @@ test-envelope-*.hex
 test-envelope-*.txt
 *-message-txid.txt
 *-reply-txid.txt
+report.html
 
 # IDE
 .vscode/

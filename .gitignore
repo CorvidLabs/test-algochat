@@ -1,0 +1,24 @@
+# Swift
+.build/
+.swiftpm/
+Package.resolved
+
+# TypeScript/Bun
+node_modules/
+dist/
+bun.lockb
+
+# Test artifacts
+test-envelope-*.hex
+test-envelope-*.txt
+*-message-txid.txt
+*-reply-txid.txt
+
+# IDE
+.vscode/
+.idea/
+*.xcodeproj/
+*.xcworkspace/
+
+# OS
+.DS_Store

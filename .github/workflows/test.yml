@@ -1,0 +1,46 @@
+name: Cross-Implementation Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  crypto-tests:
+    name: Crypto Compatibility
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: '6.0'
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install TypeScript dependencies
+        run: bun install
+
+      - name: Build Swift
+        run: swift build
+
+      - name: Run Swift crypto tests
+        run: swift run TestAlgoChat crypto
+
+      - name: Run TypeScript crypto tests
+        run: bun test ts/crypto.test.ts
+
+      - name: Verify cross-implementation decryption
+        run: |
+          echo "=== Cross-Implementation Verification ==="
+          # Swift exports envelope, TypeScript decrypts it
+          swift run TestAlgoChat crypto
+          bun test ts/crypto.test.ts --test-name-pattern "decrypt Swift"
+          echo "✓ TypeScript successfully decrypted Swift envelope"

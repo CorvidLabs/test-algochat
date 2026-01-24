@@ -94,7 +94,7 @@ jobs:
           path: rs-algochat
 
       - name: Install Rust
-        uses: dtolnay/rust-action@stable
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Run Rust tests
         run: |

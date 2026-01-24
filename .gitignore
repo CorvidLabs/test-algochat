@@ -11,6 +11,9 @@ bun.lockb
 # Test artifacts
 test-envelope-*.hex
 test-envelope-*.txt
+test-envelopes-swift/
+test-envelopes-ts/
+test-report.html
 *-message-txid.txt
 *-reply-txid.txt
 report.html

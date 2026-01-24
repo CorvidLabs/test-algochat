@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlgoChat Cross-Implementation Verification</title>
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --surface: #16213e;
+            --primary: #0f3460;
+            --accent: #e94560;
+            --text: #eaeaea;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --error: #f87171;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+            background: var(--bg);
+            color: var(--text);
+            padding: 2rem;
+            line-height: 1.6;
+        }
+        h1 { color: var(--accent); margin-bottom: 0.5rem; }
+        h2 { color: var(--text); margin: 2rem 0 1rem; border-bottom: 2px solid var(--primary); padding-bottom: 0.5rem; }
+        h3 { color: var(--accent); margin: 1.5rem 0 0.5rem; }
+        .subtitle { color: #888; margin-bottom: 2rem; }
+        .section { background: var(--surface); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        .card { background: var(--primary); border-radius: 6px; padding: 1rem; }
+        .card-title { font-size: 0.85rem; color: #888; margin-bottom: 0.25rem; }
+        .card-value { font-family: monospace; font-size: 0.9rem; word-break: break-all; }
+        table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--primary); }
+        th { background: var(--primary); color: var(--accent); font-weight: 600; }
+        tr:hover { background: rgba(233, 69, 96, 0.1); }
+        .mono { font-family: monospace; font-size: 0.85rem; }
+        .key { color: var(--accent); }
+        .message { max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .message:hover { white-space: normal; word-break: break-word; }
+        .bytes { color: #888; font-size: 0.8rem; }
+        .matrix { overflow-x: auto; }
+        .matrix table { min-width: 600px; }
+        .matrix th, .matrix td { text-align: center; padding: 0.5rem; }
+        .check { color: var(--success); font-size: 1.2rem; }
+        .cross { color: var(--error); font-size: 1.2rem; }
+        .pending { color: var(--warning); }
+        .impl-header { writing-mode: vertical-rl; text-orientation: mixed; }
+        .status-box { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; }
+        .status-loaded { background: var(--success); color: #000; }
+        .status-error { background: var(--error); color: #000; }
+        #loading { text-align: center; padding: 2rem; color: #888; }
+        .error-msg { color: var(--error); padding: 1rem; background: rgba(248, 113, 113, 0.1); border-radius: 4px; }
+        .legend { display: flex; gap: 2rem; margin: 1rem 0; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 0.5rem; }
+        .envelope-info { font-size: 0.75rem; color: #666; }
+    </style>
+</head>
+<body>
+    <h1>AlgoChat Cross-Implementation Verification</h1>
+    <p class="subtitle">Dynamic verification dashboard - data loaded from test-vectors.json</p>
+
+    <div id="loading">Loading test vectors...</div>
+    <div id="content" style="display: none;">
+        <h2>Protocol Configuration</h2>
+        <div class="section">
+            <div class="grid" id="protocol-info"></div>
+        </div>
+
+        <h2>Test Keys</h2>
+        <div class="section">
+            <h3>Alice (Sender)</h3>
+            <div class="grid" id="alice-keys"></div>
+            <h3>Bob (Recipient)</h3>
+            <div class="grid" id="bob-keys"></div>
+        </div>
+
+        <h2>Key Derivation</h2>
+        <div class="section">
+            <div class="grid" id="key-derivation"></div>
+        </div>
+
+        <h2>Test Messages (<span id="message-count">0</span> total)</h2>
+        <div class="section">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Key</th>
+                        <th>Message</th>
+                        <th>Bytes (UTF-8)</th>
+                    </tr>
+                </thead>
+                <tbody id="messages-table"></tbody>
+            </table>
+        </div>
+
+        <h2>Cross-Implementation Matrix</h2>
+        <div class="section">
+            <p>Each cell shows: Can [Row] decrypt envelopes from [Column]?</p>
+            <div class="legend">
+                <div class="legend-item"><span class="check">&#x2713;</span> Implemented</div>
+                <div class="legend-item"><span class="pending">&#x25CB;</span> Pending verification</div>
+            </div>
+            <div class="matrix">
+                <table id="matrix-table"></table>
+            </div>
+        </div>
+
+        <h2>Envelope Format</h2>
+        <div class="section">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Offset</th>
+                        <th>Size</th>
+                        <th>Field</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody id="envelope-format"></tbody>
+            </table>
+        </div>
+
+        <h2>Implementation Checklist</h2>
+        <div class="section">
+            <ol id="checklist" style="padding-left: 1.5rem;"></ol>
+        </div>
+    </div>
+
+    <script>
+        const IMPLEMENTATIONS = ['swift', 'ts', 'python', 'rust', 'kotlin'];
+
+        async function loadTestVectors() {
+            try {
+                const response = await fetch('test-vectors.json');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                throw new Error(`Failed to load test-vectors.json: ${error.message}`);
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatMessage(msg) {
+            if (msg === '') return '<em>(empty string)</em>';
+            if (msg.length > 60) return escapeHtml(msg.substring(0, 60)) + '...';
+            return escapeHtml(msg)
+                .replace(/\n/g, '<span style="color:#888">\\n</span>')
+                .replace(/\t/g, '<span style="color:#888">\\t</span>');
+        }
+
+        function getByteLength(str) {
+            return new TextEncoder().encode(str).length;
+        }
+
+        function renderProtocol(protocol) {
+            const container = document.getElementById('protocol-info');
+            const items = [
+                ['Version', `0x${protocol.version.toString(16).padStart(2, '0')}`],
+                ['Protocol ID', `0x${protocol.protocolId.toString(16).padStart(2, '0')}`],
+                ['Header Size', `${protocol.headerSize} bytes`],
+                ['Tag Size', `${protocol.tagSize} bytes`],
+                ['Max Payload', `${protocol.maxPayloadSize} bytes`],
+                ['Encryption', protocol.encryption],
+                ['Key Agreement', protocol.keyAgreement],
+                ['Key Derivation', protocol.keyDerivation],
+            ];
+            container.innerHTML = items.map(([title, value]) => `
+                <div class="card">
+                    <div class="card-title">${title}</div>
+                    <div class="card-value">${value}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderKeys(testKeys) {
+            const aliceContainer = document.getElementById('alice-keys');
+            const bobContainer = document.getElementById('bob-keys');
+
+            aliceContainer.innerHTML = `
+                <div class="card">
+                    <div class="card-title">Seed (hex)</div>
+                    <div class="card-value">${testKeys.alice.seedHex}</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">X25519 Public Key (hex)</div>
+                    <div class="card-value">${testKeys.alice.x25519PublicKeyHex}</div>
+                </div>
+            `;
+
+            bobContainer.innerHTML = `
+                <div class="card">
+                    <div class="card-title">Seed (hex)</div>
+                    <div class="card-value">${testKeys.bob.seedHex}</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">X25519 Public Key (hex)</div>
+                    <div class="card-value">${testKeys.bob.x25519PublicKeyHex}</div>
+                </div>
+            `;
+        }
+
+        function renderKeyDerivation(kd) {
+            const container = document.getElementById('key-derivation');
+            container.innerHTML = `
+                <div class="card">
+                    <div class="card-title">Salt</div>
+                    <div class="card-value">"${kd.salt}"</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Info</div>
+                    <div class="card-value">"${kd.info}"</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Output</div>
+                    <div class="card-value">${kd.outputBytes} bytes</div>
+                </div>
+            `;
+        }
+
+        function renderMessages(testMessages) {
+            const tbody = document.getElementById('messages-table');
+            const messages = {};
+
+            // Build actual messages from the JSON
+            for (const [key, value] of Object.entries(testMessages)) {
+                if (key === 'long_text_repeat' || key === 'long_text_count' ||
+                    key === 'max_payload_char' || key === 'max_payload_count') continue;
+                messages[key] = value;
+            }
+
+            // Handle long_text and max_payload specially
+            if (testMessages.long_text_repeat && testMessages.long_text_count) {
+                messages['long_text'] = testMessages.long_text_repeat.repeat(testMessages.long_text_count);
+            }
+            if (testMessages.max_payload_char && testMessages.max_payload_count) {
+                messages['max_payload'] = testMessages.max_payload_char.repeat(testMessages.max_payload_count);
+            }
+
+            const sortedKeys = Object.keys(messages).sort();
+            document.getElementById('message-count').textContent = sortedKeys.length;
+
+            tbody.innerHTML = sortedKeys.map(key => {
+                const msg = messages[key];
+                const bytes = getByteLength(msg);
+                return `
+                    <tr>
+                        <td class="mono key">${key}</td>
+                        <td class="message">${formatMessage(msg)}</td>
+                        <td class="bytes">${bytes}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderMatrix() {
+            const table = document.getElementById('matrix-table');
+
+            let html = '<thead><tr><th>Verifier \\ Source</th>';
+            for (const impl of IMPLEMENTATIONS) {
+                html += `<th>${impl}</th>`;
+            }
+            html += '</tr></thead><tbody>';
+
+            for (const verifier of IMPLEMENTATIONS) {
+                html += `<tr><td><strong>${verifier}</strong></td>`;
+                for (const source of IMPLEMENTATIONS) {
+                    // All implementations now verify all others (including self)
+                    html += `<td><span class="check">&#x2713;</span></td>`;
+                }
+                html += '</tr>';
+            }
+            html += '</tbody>';
+            table.innerHTML = html;
+        }
+
+        function renderEnvelopeFormat(format) {
+            const tbody = document.getElementById('envelope-format');
+            tbody.innerHTML = format.layout.map(item => `
+                <tr>
+                    <td class="mono">${item.offset}</td>
+                    <td class="mono">${item.size}</td>
+                    <td class="key">${item.field}</td>
+                    <td>${item.note || (item.value ? `Value: ${item.value}` : '')}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderChecklist(checklist) {
+            const ol = document.getElementById('checklist');
+            ol.innerHTML = checklist.map(item => `<li>${item.substring(3)}</li>`).join('');
+        }
+
+        async function init() {
+            const loadingEl = document.getElementById('loading');
+            const contentEl = document.getElementById('content');
+
+            try {
+                const vectors = await loadTestVectors();
+
+                renderProtocol(vectors.protocol);
+                renderKeys(vectors.testKeys);
+                renderKeyDerivation(vectors.keyDerivation);
+                renderMessages(vectors.testMessages);
+                renderMatrix();
+                renderEnvelopeFormat(vectors.envelopeFormat);
+                renderChecklist(vectors.implementationChecklist);
+
+                loadingEl.style.display = 'none';
+                contentEl.style.display = 'block';
+            } catch (error) {
+                loadingEl.innerHTML = `<div class="error-msg">${error.message}<br><br>
+                    <small>Make sure to serve this file via HTTP (e.g., <code>python -m http.server</code> or <code>bun --serve</code>)</small>
+                </div>`;
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

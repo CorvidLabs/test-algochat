@@ -1,0 +1,12 @@
+[submodule "py-algochat"]
+	path = py-algochat
+	url = https://github.com/CorvidLabs/py-algochat.git
+[submodule "rs-algochat"]
+	path = rs-algochat
+	url = https://github.com/CorvidLabs/rs-algochat.git
+[submodule "kt-algochat"]
+	path = kt-algochat
+	url = https://github.com/CorvidLabs/kt-algochat.git
+[submodule "ts-algochat"]
+	path = ts-algochat
+	url = https://github.com/CorvidLabs/ts-algochat.git

@@ -9,10 +9,15 @@ on:
 jobs:
   swift-tests:
     name: Swift Tests
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Install Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: '6.0'
 
       - name: Build Swift
         run: swift build
@@ -125,11 +130,16 @@ jobs:
 
   cross-implementation:
     name: Cross-Implementation Verification
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     needs: [swift-tests, typescript-tests]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Install Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: '6.0'
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2

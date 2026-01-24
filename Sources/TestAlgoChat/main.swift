@@ -235,6 +235,98 @@ private func runCryptoTests() async throws {
         failed += 1
     }
 
+    // Test 6: Multi-Message Round Trip
+    print("\nTest 6: Multi-Message Round Trip (\(TestVectors.testMessages.count) messages)")
+    do {
+        let (alicePrivateKey, _) = try TestVectors.aliceKeys()
+        let (bobPrivateKey, bobPublicKey) = try TestVectors.bobKeys()
+
+        var multiPassed = 0
+        var multiFailed = 0
+        let sortedKeys = TestVectors.testMessages.keys.sorted()
+
+        for key in sortedKeys {
+            let message = TestVectors.testMessages[key]!
+
+            do {
+                // Alice encrypts for Bob
+                let envelope = try MessageEncryptor.encrypt(
+                    message: message,
+                    senderPrivateKey: alicePrivateKey,
+                    recipientPublicKey: bobPublicKey
+                )
+
+                // Bob decrypts
+                let decrypted = try MessageEncryptor.decrypt(
+                    envelope: envelope,
+                    recipientPrivateKey: bobPrivateKey
+                )
+
+                guard let content = decrypted else {
+                    throw TestError.assertion("Decryption returned nil for '\(key)'")
+                }
+
+                guard content.text == message else {
+                    throw TestError.assertion("Message mismatch for '\(key)': expected '\(message)', got '\(content.text)'")
+                }
+
+                let displayMessage = message.count > 30 ? "\(message.prefix(30))..." : message
+                let displayEscaped = displayMessage.replacingOccurrences(of: "\n", with: "\\n")
+                    .replacingOccurrences(of: "\t", with: "\\t")
+                print("  \u{2713} \(key): \"\(displayEscaped)\"")
+                multiPassed += 1
+            } catch {
+                print("  \u{2717} \(key): FAILED - \(error)")
+                multiFailed += 1
+            }
+        }
+
+        print("  Multi-message: \(multiPassed)/\(TestVectors.testMessages.count) passed")
+        if multiFailed > 0 {
+            throw TestError.testsFailed(multiFailed)
+        }
+        passed += 1
+    } catch {
+        print("  \u{2717} FAILED: \(error)")
+        failed += 1
+    }
+
+    // Test 7: Export All Test Envelopes
+    print("\nTest 7: Export All Test Envelopes for Cross-Implementation")
+    do {
+        let (alicePrivateKey, _) = try TestVectors.aliceKeys()
+        let (_, bobPublicKey) = try TestVectors.bobKeys()
+
+        // Create output directory
+        let outputDir = "test-envelopes-swift"
+        try FileManager.default.createDirectory(atPath: outputDir, withIntermediateDirectories: true)
+
+        let sortedKeys = TestVectors.testMessages.keys.sorted()
+        var exportCount = 0
+
+        for key in sortedKeys {
+            let message = TestVectors.testMessages[key]!
+
+            let envelope = try MessageEncryptor.encrypt(
+                message: message,
+                senderPrivateKey: alicePrivateKey,
+                recipientPublicKey: bobPublicKey
+            )
+
+            let encoded = envelope.encode()
+            let outputPath = "\(outputDir)/\(key).hex"
+            try encoded.hexString.write(toFile: outputPath, atomically: true, encoding: .utf8)
+            exportCount += 1
+        }
+
+        print("  Exported \(exportCount) envelopes to \(outputDir)/")
+        print("  \u{2713} Export completed")
+        passed += 1
+    } catch {
+        print("  \u{2717} FAILED: \(error)")
+        failed += 1
+    }
+
     // Summary
     print("\n=== Summary ===")
     print("Passed: \(passed)")

@@ -15,6 +15,7 @@ import {
     SIMPLE_MESSAGE,
     SWIFT_MESSAGE,
     UNICODE_MESSAGE,
+    TEST_MESSAGES,
     PROTOCOL,
     bytesToHex,
     hexToBytes,
@@ -243,5 +244,135 @@ describe('Cross-Implementation', () => {
         expect(decrypted).not.toBeNull();
         expect(decrypted!.text).toBe(SWIFT_MESSAGE);
         console.log(`  Decrypted: "${decrypted!.text}"`);
+    });
+});
+
+describe('Multi-Message Tests', () => {
+    const messageKeys = Object.keys(TEST_MESSAGES).sort();
+
+    test('all message types encrypt/decrypt correctly', () => {
+        let passed = 0;
+        let failed = 0;
+
+        for (const key of messageKeys) {
+            const message = TEST_MESSAGES[key];
+
+            try {
+                const envelope = encryptMessage(
+                    message,
+                    aliceKeys.privateKey,
+                    aliceKeys.publicKey,
+                    bobKeys.publicKey
+                );
+
+                const decrypted = decryptMessage(envelope, bobKeys.privateKey, bobKeys.publicKey);
+
+                expect(decrypted).not.toBeNull();
+                expect(decrypted!.text).toBe(message);
+                passed++;
+
+                const displayMessage = message.length > 30 ? message.substring(0, 30) + '...' : message;
+                const displayEscaped = displayMessage.replace(/\n/g, '\\n').replace(/\t/g, '\\t');
+                console.log(`  ✓ ${key}: "${displayEscaped}"`);
+            } catch (error) {
+                failed++;
+                console.log(`  ✗ ${key}: FAILED - ${error}`);
+            }
+        }
+
+        console.log(`  Multi-message: ${passed}/${messageKeys.length} passed`);
+        expect(failed).toBe(0);
+    });
+
+    test('sender can decrypt all message types', () => {
+        for (const key of messageKeys) {
+            const message = TEST_MESSAGES[key];
+
+            const envelope = encryptMessage(
+                message,
+                aliceKeys.privateKey,
+                aliceKeys.publicKey,
+                bobKeys.publicKey
+            );
+
+            const decrypted = decryptMessage(envelope, aliceKeys.privateKey, aliceKeys.publicKey);
+
+            expect(decrypted).not.toBeNull();
+            expect(decrypted!.text).toBe(message);
+        }
+    });
+
+    test('export all test envelopes for Swift', () => {
+        const { mkdirSync, writeFileSync } = require('fs');
+        const outputDir = 'test-envelopes-ts';
+
+        try {
+            mkdirSync(outputDir, { recursive: true });
+        } catch {
+            // Directory may already exist
+        }
+
+        let exportCount = 0;
+
+        for (const key of messageKeys) {
+            const message = TEST_MESSAGES[key];
+
+            const envelope = encryptMessage(
+                message,
+                aliceKeys.privateKey,
+                aliceKeys.publicKey,
+                bobKeys.publicKey
+            );
+
+            const encoded = encodeEnvelope(envelope);
+            writeFileSync(`${outputDir}/${key}.hex`, bytesToHex(encoded));
+            exportCount++;
+        }
+
+        console.log(`  Exported ${exportCount} envelopes to ${outputDir}/`);
+    });
+
+    test('decrypt all Swift envelopes', () => {
+        const envelopeDir = 'test-envelopes-swift';
+        if (!existsSync(envelopeDir)) {
+            console.log('  SKIP: Run Swift tests first to generate envelopes');
+            return;
+        }
+
+        let passed = 0;
+        let failed = 0;
+
+        for (const key of messageKeys) {
+            const envelopePath = `${envelopeDir}/${key}.hex`;
+            if (!existsSync(envelopePath)) {
+                console.log(`  SKIP: ${key} - envelope not found`);
+                continue;
+            }
+
+            try {
+                const hexContent = readFileSync(envelopePath, 'utf-8').trim();
+                const encoded = hexToBytes(hexContent);
+                const envelope = decodeEnvelope(encoded);
+
+                const decrypted = decryptMessage(envelope, bobKeys.privateKey, bobKeys.publicKey);
+
+                expect(decrypted).not.toBeNull();
+
+                const expectedMessage = TEST_MESSAGES[key];
+                expect(decrypted!.text).toBe(expectedMessage);
+                passed++;
+
+                const displayMessage =
+                    expectedMessage.length > 30 ? expectedMessage.substring(0, 30) + '...' : expectedMessage;
+                const displayEscaped = displayMessage.replace(/\n/g, '\\n').replace(/\t/g, '\\t');
+                console.log(`  ✓ ${key}: "${displayEscaped}"`);
+            } catch (error) {
+                failed++;
+                console.log(`  ✗ ${key}: FAILED - ${error}`);
+            }
+        }
+
+        console.log(`  Cross-impl verification: ${passed}/${messageKeys.length} passed`);
+        expect(failed).toBe(0);
     });
 });

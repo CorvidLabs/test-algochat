@@ -54,6 +54,39 @@ export const SWIFT_MESSAGE = 'Hello from Swift! Testing cross-implementation enc
 export const UNICODE_MESSAGE = 'Hello! \u{1F44B} Encrypted messaging on Algorand \u{1F512}';
 export const LONG_MESSAGE = 'The quick brown fox jumps over the lazy dog. '.repeat(15);
 
+// Comprehensive test messages (20 total) - must match Swift TestVectors.testMessages exactly
+export const TEST_MESSAGES: Record<string, string> = {
+    // Basic strings
+    empty: '',
+    single_char: 'X',
+    whitespace: '   \t\n   ',
+    numbers: '1234567890',
+    punctuation: '!@#$%^&*()_+-=[]{}\\|;\':",./<>?',
+    newlines: 'Line 1\nLine 2\nLine 3',
+
+    // Emoji
+    emoji_simple: 'Hello 👋 World 🌍',
+    emoji_zwj: 'Family: 👨‍👩‍👧‍👦',
+
+    // International scripts
+    chinese: '你好世界 - Hello World',
+    arabic: 'مرحبا بالعالم',
+    japanese: 'こんにちは世界 カタカナ 漢字',
+    korean: '안녕하세요 세계',
+    accents: 'Café résumé naïve',
+    cyrillic: 'Привет мир',
+
+    // Structured content
+    json: '{"key": "value", "num": 42}',
+    html: '<div class="test">Content</div>',
+    url: 'https://example.com/path?q=test&lang=en',
+    code: 'func hello() { print("Hi") }',
+
+    // Size limits
+    long_text: 'The quick brown fox jumps over the lazy dog. '.repeat(11),
+    max_payload: 'A'.repeat(882),
+};
+
 // Protocol constants
 export const PROTOCOL = {
     VERSION: 0x01,

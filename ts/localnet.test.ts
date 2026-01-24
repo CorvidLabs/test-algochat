@@ -10,7 +10,8 @@ import { decryptMessage, decodeEnvelope, isChatMessage } from 'ts-algochat';
 import {
     getAliceKeys,
     getBobKeys,
-    SIMPLE_MESSAGE,
+    SWIFT_MESSAGE,
+    TEST_MESSAGES,
     bytesToHex,
     hexToBytes,
 } from './test-vectors';
@@ -53,7 +54,7 @@ describe('Cross-Implementation Verification', () => {
         const decrypted = decryptMessage(envelope, bobKeys.privateKey, bobKeys.publicKey);
 
         expect(decrypted).not.toBeNull();
-        expect(decrypted!.text).toBe(SIMPLE_MESSAGE);
+        expect(decrypted!.text).toBe(SWIFT_MESSAGE);
         console.log(`  Decrypted: "${decrypted!.text}"`);
     });
 
@@ -77,5 +78,50 @@ describe('Cross-Implementation Verification', () => {
 
             expect(tsAlicePubKey).toBe(swiftAlicePubKey);
         }
+    });
+
+    test('batch verify all Swift envelopes', () => {
+        const envelopeDir = 'test-envelopes-swift';
+        if (!existsSync(envelopeDir)) {
+            console.log('  SKIP: Run Swift tests first to generate envelopes');
+            return;
+        }
+
+        const messageKeys = Object.keys(TEST_MESSAGES).sort();
+        let passed = 0;
+        let failed = 0;
+        let skipped = 0;
+
+        console.log(`  Verifying ${messageKeys.length} Swift envelopes...`);
+
+        for (const key of messageKeys) {
+            const envelopePath = `${envelopeDir}/${key}.hex`;
+            if (!existsSync(envelopePath)) {
+                skipped++;
+                continue;
+            }
+
+            try {
+                const hexContent = readFileSync(envelopePath, 'utf-8').trim();
+                const encoded = hexToBytes(hexContent);
+
+                expect(isChatMessage(encoded)).toBe(true);
+
+                const envelope = decodeEnvelope(encoded);
+                const decrypted = decryptMessage(envelope, bobKeys.privateKey, bobKeys.publicKey);
+
+                expect(decrypted).not.toBeNull();
+
+                const expectedMessage = TEST_MESSAGES[key];
+                expect(decrypted!.text).toBe(expectedMessage);
+                passed++;
+            } catch (error) {
+                failed++;
+                console.log(`  ✗ ${key}: FAILED - ${error}`);
+            }
+        }
+
+        console.log(`  Results: ${passed} passed, ${failed} failed, ${skipped} skipped`);
+        expect(failed).toBe(0);
     });
 });

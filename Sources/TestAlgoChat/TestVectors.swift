@@ -73,6 +73,41 @@ public enum TestVectors {
     /// Long message (near max payload)
     public static let longMessage = String(repeating: "The quick brown fox jumps over the lazy dog. ", count: 15)
 
+    // MARK: - Comprehensive Test Messages (20 total)
+
+    /// Dictionary of test messages for comprehensive cross-implementation testing
+    public static let testMessages: [String: String] = [
+        // Basic strings
+        "empty": "",
+        "single_char": "X",
+        "whitespace": "   \t\n   ",
+        "numbers": "1234567890",
+        "punctuation": "!@#$%^&*()_+-=[]{}\\|;':\",./<>?",
+        "newlines": "Line 1\nLine 2\nLine 3",
+
+        // Emoji
+        "emoji_simple": "Hello 👋 World 🌍",
+        "emoji_zwj": "Family: 👨‍👩‍👧‍👦",
+
+        // International scripts
+        "chinese": "你好世界 - Hello World",
+        "arabic": "مرحبا بالعالم",
+        "japanese": "こんにちは世界 カタカナ 漢字",
+        "korean": "안녕하세요 세계",
+        "accents": "Café résumé naïve",
+        "cyrillic": "Привет мир",
+
+        // Structured content
+        "json": "{\"key\": \"value\", \"num\": 42}",
+        "html": "<div class=\"test\">Content</div>",
+        "url": "https://example.com/path?q=test&lang=en",
+        "code": "func hello() { print(\"Hi\") }",
+
+        // Size limits
+        "long_text": String(repeating: "The quick brown fox jumps over the lazy dog. ", count: 11),
+        "max_payload": String(repeating: "A", count: 882),
+    ]
+
     // MARK: - Protocol Constants
 
     public static let protocolVersion: UInt8 = 0x01

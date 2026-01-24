@@ -15,6 +15,8 @@ struct TestAlgoChatCLI {
         switch command {
         case "crypto":
             try await runCryptoTests()
+        case "cross-impl":
+            try await runCrossImplTests()
         case "localnet":
             try await runLocalnetTests()
         case "vectors":
@@ -31,10 +33,11 @@ struct TestAlgoChatCLI {
         Usage: TestAlgoChat <command>
 
         Commands:
-          crypto   - Run cryptographic compatibility tests (offline)
-          localnet - Run integration tests (requires localnet)
-          vectors  - Print computed test vectors
-          all      - Run all tests
+          crypto     - Run cryptographic compatibility tests (offline)
+          cross-impl - Verify decryption of envelopes from all implementations
+          localnet   - Run integration tests (requires localnet)
+          vectors    - Print computed test vectors
+          all        - Run all tests
 
         """)
     }
@@ -457,6 +460,75 @@ private func runCryptoTests() async throws {
     print("Failed: \(failed)")
 
     if failed > 0 {
+        exit(1)
+    }
+}
+
+// MARK: - Cross-Implementation Tests
+
+private func runCrossImplTests() async throws {
+    print("=== Cross-Implementation Verification ===\n")
+    print("Swift decrypting envelopes from all implementations\n")
+
+    let (bobPrivateKey, _) = try TestVectors.bobKeys()
+    let implementations = ["swift", "ts", "python", "rust", "kotlin"]
+
+    var totalPassed = 0
+    var totalFailed = 0
+
+    for impl in implementations {
+        let envelopeDir = "test-envelopes-\(impl)"
+
+        guard FileManager.default.fileExists(atPath: envelopeDir) else {
+            print("\(impl): SKIP - directory not found")
+            continue
+        }
+
+        var passed = 0
+        var failed = 0
+        let sortedKeys = TestVectors.testMessages.keys.sorted()
+
+        for key in sortedKeys {
+            let envelopePath = "\(envelopeDir)/\(key).hex"
+            guard FileManager.default.fileExists(atPath: envelopePath) else {
+                continue
+            }
+
+            do {
+                let hexContent = try String(contentsOfFile: envelopePath, encoding: .utf8)
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                guard let noteData = Data(hexString: hexContent) else {
+                    throw TestError.assertion("Failed to decode hex")
+                }
+
+                let envelope = try ChatEnvelope.decode(from: noteData)
+                guard let content = try MessageEncryptor.decrypt(
+                    envelope: envelope,
+                    recipientPrivateKey: bobPrivateKey
+                ) else {
+                    throw TestError.assertion("Decryption returned nil")
+                }
+
+                let expectedMessage = TestVectors.testMessages[key]!
+                guard content.text == expectedMessage else {
+                    throw TestError.assertion("Message mismatch")
+                }
+
+                passed += 1
+            } catch {
+                failed += 1
+            }
+        }
+
+        print("\(impl): \(passed)/\(passed + failed) passed")
+        totalPassed += passed
+        totalFailed += failed
+    }
+
+    print("\n=== Summary ===")
+    print("Total: \(totalPassed)/\(totalPassed + totalFailed) passed")
+
+    if totalFailed > 0 {
         exit(1)
     }
 }

@@ -419,4 +419,131 @@ describe('Multi-Message Tests', () => {
         console.log(`  Python cross-impl verification: ${passed}/${messageKeys.length} passed`);
         expect(failed).toBe(0);
     });
+
+    test('decrypt all Rust envelopes', () => {
+        const envelopeDir = 'test-envelopes-rust';
+        if (!existsSync(envelopeDir)) {
+            console.log('  SKIP: Run Rust tests first to generate envelopes');
+            return;
+        }
+
+        let passed = 0;
+        let failed = 0;
+
+        for (const key of messageKeys) {
+            const envelopePath = `${envelopeDir}/${key}.hex`;
+            if (!existsSync(envelopePath)) {
+                continue;
+            }
+
+            try {
+                const hexContent = readFileSync(envelopePath, 'utf-8').trim();
+                const encoded = hexToBytes(hexContent);
+                const envelope = decodeEnvelope(encoded);
+
+                const decrypted = decryptMessage(envelope, bobKeys.privateKey, bobKeys.publicKey);
+
+                expect(decrypted).not.toBeNull();
+
+                const expectedMessage = TEST_MESSAGES[key];
+                expect(decrypted!.text).toBe(expectedMessage);
+                passed++;
+            } catch (error) {
+                failed++;
+                console.log(`  ✗ ${key}: FAILED - ${error}`);
+            }
+        }
+
+        console.log(`  Rust cross-impl verification: ${passed}/${passed + failed} passed`);
+        expect(failed).toBe(0);
+    });
+
+    test('decrypt all Kotlin envelopes', () => {
+        const envelopeDir = 'test-envelopes-kotlin';
+        if (!existsSync(envelopeDir)) {
+            console.log('  SKIP: Run Kotlin tests first to generate envelopes');
+            return;
+        }
+
+        let passed = 0;
+        let failed = 0;
+
+        for (const key of messageKeys) {
+            const envelopePath = `${envelopeDir}/${key}.hex`;
+            if (!existsSync(envelopePath)) {
+                continue;
+            }
+
+            try {
+                const hexContent = readFileSync(envelopePath, 'utf-8').trim();
+                const encoded = hexToBytes(hexContent);
+                const envelope = decodeEnvelope(encoded);
+
+                const decrypted = decryptMessage(envelope, bobKeys.privateKey, bobKeys.publicKey);
+
+                expect(decrypted).not.toBeNull();
+
+                const expectedMessage = TEST_MESSAGES[key];
+                expect(decrypted!.text).toBe(expectedMessage);
+                passed++;
+            } catch (error) {
+                failed++;
+                console.log(`  ✗ ${key}: FAILED - ${error}`);
+            }
+        }
+
+        console.log(`  Kotlin cross-impl verification: ${passed}/${passed + failed} passed`);
+        expect(failed).toBe(0);
+    });
+});
+
+describe('cross-impl', () => {
+    const messageKeys = Object.keys(TEST_MESSAGES).sort();
+    const implementations = ['swift', 'ts', 'python', 'rust', 'kotlin'];
+
+    test('verify all implementations', () => {
+        let totalPassed = 0;
+        let totalFailed = 0;
+
+        for (const impl of implementations) {
+            const envelopeDir = `test-envelopes-${impl}`;
+            if (!existsSync(envelopeDir)) {
+                console.log(`${impl}: SKIP - directory not found`);
+                continue;
+            }
+
+            let passed = 0;
+            let failed = 0;
+
+            for (const key of messageKeys) {
+                const envelopePath = `${envelopeDir}/${key}.hex`;
+                if (!existsSync(envelopePath)) {
+                    continue;
+                }
+
+                try {
+                    const hexContent = readFileSync(envelopePath, 'utf-8').trim();
+                    const encoded = hexToBytes(hexContent);
+                    const envelope = decodeEnvelope(encoded);
+
+                    const decrypted = decryptMessage(envelope, bobKeys.privateKey, bobKeys.publicKey);
+
+                    if (decrypted && decrypted.text === TEST_MESSAGES[key]) {
+                        passed++;
+                    } else {
+                        failed++;
+                    }
+                } catch {
+                    failed++;
+                }
+            }
+
+            console.log(`${impl}: ${passed}/${passed + failed} passed`);
+            totalPassed += passed;
+            totalFailed += failed;
+        }
+
+        console.log(`\nTotal: ${totalPassed}/${totalPassed + totalFailed} passed`);
+        expect(totalFailed).toBe(0);
+    });
 });

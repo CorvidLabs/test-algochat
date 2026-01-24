@@ -13,6 +13,7 @@ test-envelope-*.hex
 test-envelope-*.txt
 test-envelopes-swift/
 test-envelopes-ts/
+test-envelopes-python/
 test-report.html
 *-message-txid.txt
 *-reply-txid.txt

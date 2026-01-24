@@ -327,6 +327,130 @@ private func runCryptoTests() async throws {
         failed += 1
     }
 
+    // Test 8: Decrypt TypeScript Envelopes
+    print("\nTest 8: Decrypt TypeScript Envelopes")
+    do {
+        let envelopeDir = "test-envelopes-ts"
+        let (bobPrivateKey, _) = try TestVectors.bobKeys()
+
+        guard FileManager.default.fileExists(atPath: envelopeDir) else {
+            print("  SKIP: Run TypeScript tests first to generate envelopes")
+            passed += 1
+            throw TestError.assertion("skipped")
+        }
+
+        var crossPassed = 0
+        var crossFailed = 0
+        let sortedKeys = TestVectors.testMessages.keys.sorted()
+
+        for key in sortedKeys {
+            let envelopePath = "\(envelopeDir)/\(key).hex"
+            guard FileManager.default.fileExists(atPath: envelopePath) else {
+                print("  SKIP: \(key) - envelope not found")
+                continue
+            }
+
+            do {
+                let hexContent = try String(contentsOfFile: envelopePath, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines)
+                guard let noteData = Data(hexString: hexContent) else {
+                    throw TestError.assertion("Failed to decode hex")
+                }
+
+                let envelope = try ChatEnvelope.decode(from: noteData)
+                guard let content = try MessageEncryptor.decrypt(envelope: envelope, recipientPrivateKey: bobPrivateKey) else {
+                    throw TestError.assertion("Decryption returned nil")
+                }
+
+                let expectedMessage = TestVectors.testMessages[key]!
+                guard content.text == expectedMessage else {
+                    throw TestError.assertion("Message mismatch")
+                }
+
+                let displayMessage = expectedMessage.count > 30 ? "\(expectedMessage.prefix(30))..." : expectedMessage
+                let displayEscaped = displayMessage.replacingOccurrences(of: "\n", with: "\\n")
+                    .replacingOccurrences(of: "\t", with: "\\t")
+                print("  \u{2713} \(key): \"\(displayEscaped)\"")
+                crossPassed += 1
+            } catch {
+                print("  \u{2717} \(key): FAILED - \(error)")
+                crossFailed += 1
+            }
+        }
+
+        print("  TypeScript cross-impl: \(crossPassed)/\(sortedKeys.count) passed")
+        if crossFailed > 0 {
+            throw TestError.testsFailed(crossFailed)
+        }
+        passed += 1
+    } catch TestError.assertion("skipped") {
+        // Skip is fine
+    } catch {
+        print("  \u{2717} FAILED: \(error)")
+        failed += 1
+    }
+
+    // Test 9: Decrypt Python Envelopes
+    print("\nTest 9: Decrypt Python Envelopes")
+    do {
+        let envelopeDir = "test-envelopes-python"
+        let (bobPrivateKey, _) = try TestVectors.bobKeys()
+
+        guard FileManager.default.fileExists(atPath: envelopeDir) else {
+            print("  SKIP: Run Python tests first to generate envelopes")
+            passed += 1
+            throw TestError.assertion("skipped")
+        }
+
+        var crossPassed = 0
+        var crossFailed = 0
+        let sortedKeys = TestVectors.testMessages.keys.sorted()
+
+        for key in sortedKeys {
+            let envelopePath = "\(envelopeDir)/\(key).hex"
+            guard FileManager.default.fileExists(atPath: envelopePath) else {
+                print("  SKIP: \(key) - envelope not found")
+                continue
+            }
+
+            do {
+                let hexContent = try String(contentsOfFile: envelopePath, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines)
+                guard let noteData = Data(hexString: hexContent) else {
+                    throw TestError.assertion("Failed to decode hex")
+                }
+
+                let envelope = try ChatEnvelope.decode(from: noteData)
+                guard let content = try MessageEncryptor.decrypt(envelope: envelope, recipientPrivateKey: bobPrivateKey) else {
+                    throw TestError.assertion("Decryption returned nil")
+                }
+
+                let expectedMessage = TestVectors.testMessages[key]!
+                guard content.text == expectedMessage else {
+                    throw TestError.assertion("Message mismatch")
+                }
+
+                let displayMessage = expectedMessage.count > 30 ? "\(expectedMessage.prefix(30))..." : expectedMessage
+                let displayEscaped = displayMessage.replacingOccurrences(of: "\n", with: "\\n")
+                    .replacingOccurrences(of: "\t", with: "\\t")
+                print("  \u{2713} \(key): \"\(displayEscaped)\"")
+                crossPassed += 1
+            } catch {
+                print("  \u{2717} \(key): FAILED - \(error)")
+                crossFailed += 1
+            }
+        }
+
+        print("  Python cross-impl: \(crossPassed)/\(sortedKeys.count) passed")
+        if crossFailed > 0 {
+            throw TestError.testsFailed(crossFailed)
+        }
+        passed += 1
+    } catch TestError.assertion("skipped") {
+        // Skip is fine
+    } catch {
+        print("  \u{2717} FAILED: \(error)")
+        failed += 1
+    }
+
     // Summary
     print("\n=== Summary ===")
     print("Passed: \(passed)")

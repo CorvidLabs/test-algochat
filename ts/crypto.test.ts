@@ -375,4 +375,48 @@ describe('Multi-Message Tests', () => {
         console.log(`  Cross-impl verification: ${passed}/${messageKeys.length} passed`);
         expect(failed).toBe(0);
     });
+
+    test('decrypt all Python envelopes', () => {
+        const envelopeDir = 'test-envelopes-python';
+        if (!existsSync(envelopeDir)) {
+            console.log('  SKIP: Run Python tests first to generate envelopes');
+            return;
+        }
+
+        let passed = 0;
+        let failed = 0;
+
+        for (const key of messageKeys) {
+            const envelopePath = `${envelopeDir}/${key}.hex`;
+            if (!existsSync(envelopePath)) {
+                console.log(`  SKIP: ${key} - envelope not found`);
+                continue;
+            }
+
+            try {
+                const hexContent = readFileSync(envelopePath, 'utf-8').trim();
+                const encoded = hexToBytes(hexContent);
+                const envelope = decodeEnvelope(encoded);
+
+                const decrypted = decryptMessage(envelope, bobKeys.privateKey, bobKeys.publicKey);
+
+                expect(decrypted).not.toBeNull();
+
+                const expectedMessage = TEST_MESSAGES[key];
+                expect(decrypted!.text).toBe(expectedMessage);
+                passed++;
+
+                const displayMessage =
+                    expectedMessage.length > 30 ? expectedMessage.substring(0, 30) + '...' : expectedMessage;
+                const displayEscaped = displayMessage.replace(/\n/g, '\\n').replace(/\t/g, '\\t');
+                console.log(`  ✓ ${key}: "${displayEscaped}"`);
+            } catch (error) {
+                failed++;
+                console.log(`  ✗ ${key}: FAILED - ${error}`);
+            }
+        }
+
+        console.log(`  Python cross-impl verification: ${passed}/${messageKeys.length} passed`);
+        expect(failed).toBe(0);
+    });
 });

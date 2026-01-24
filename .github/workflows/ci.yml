@@ -222,64 +222,19 @@ jobs:
         run: |
           echo "=== Generating Python envelopes ==="
           cd py-algochat
-          python -c "
-          from algochat import Keys, Crypto, Envelope
-          import os
-
-          ALICE_SEED = bytes.fromhex('0000000000000000000000000000000000000000000000000000000000000001')
-          BOB_SEED = bytes.fromhex('0000000000000000000000000000000000000000000000000000000000000002')
-
-          alice_private, alice_public = Keys.derive_keys_from_seed(ALICE_SEED)
-          bob_private, bob_public = Keys.derive_keys_from_seed(BOB_SEED)
-
-          TEST_MESSAGES = {
-              'empty': '',
-              'single_char': 'X',
-              'whitespace': '   \t\n   ',
-              'numbers': '1234567890',
-              'punctuation': '!@#\$%^&*()_+-=[]{}\\|;\':\",./<>?',
-              'newlines': 'Line 1\nLine 2\nLine 3',
-              'emoji_simple': 'Hello 👋 World 🌍',
-              'emoji_zwj': 'Family: 👨‍👩‍👧‍👦',
-              'chinese': '你好世界 - Hello World',
-              'arabic': 'مرحبا بالعالم',
-              'japanese': 'こんにちは世界 カタカナ 漢字',
-              'korean': '안녕하세요 세계',
-              'accents': 'Café résumé naïve',
-              'cyrillic': 'Привет мир',
-              'json': '{\"key\": \"value\", \"num\": 42}',
-              'html': '<div class=\"test\">Content</div>',
-              'url': 'https://example.com/path?q=test&lang=en',
-              'code': 'func hello() { print(\"Hi\") }',
-              'long_text': 'The quick brown fox jumps over the lazy dog. ' * 11,
-              'max_payload': 'A' * 882,
-          }
-
-          os.makedirs('../test-envelopes-python', exist_ok=True)
-          for key, message in TEST_MESSAGES.items():
-              envelope = Crypto.encrypt_message(message, alice_private, alice_public, bob_public)
-              encoded = envelope.encode()
-              with open(f'../test-envelopes-python/{key}.hex', 'w') as f:
-                  f.write(encoded.hex())
-              print(f'✓ {key}')
-          print(f'Python: exported {len(TEST_MESSAGES)} envelopes')
-          "
+          PYTHONPATH=src python ../scripts/python_cross_impl.py export ../test-envelopes-python
 
       - name: Generate Rust envelopes
         run: |
           echo "=== Generating Rust envelopes ==="
           cd rs-algochat
-          cargo run --example export_envelopes 2>/dev/null || echo "Rust export via test"
-          # Run tests which will skip cross-impl but export is handled separately
-          cargo test -- --nocapture 2>&1 | grep -E "(✓|passed)" || true
+          cargo run --example export_envelopes -- ../test-envelopes-rust
 
       - name: Generate Kotlin envelopes
         run: |
           echo "=== Generating Kotlin envelopes ==="
           cd kt-algochat
-          ./gradlew run --args="export ../test-envelopes-kotlin" 2>/dev/null || \
-          ./gradlew test --tests "*.CrossImplTest.exportEnvelopes" 2>/dev/null || \
-          echo "Kotlin envelope export handled by test"
+          ./gradlew test --tests "CrossImplTest" --info || gradle test --tests "CrossImplTest" --info
 
       # Cross-implementation verification
       - name: Swift verifies all implementations
@@ -296,76 +251,7 @@ jobs:
         run: |
           echo "=== Python decrypting envelopes from all implementations ==="
           cd py-algochat
-          python -c "
-          from algochat import Keys, Crypto, Envelope, is_chat_message
-          import os
-
-          BOB_SEED = bytes.fromhex('0000000000000000000000000000000000000000000000000000000000000002')
-          bob_private, bob_public = Keys.derive_keys_from_seed(BOB_SEED)
-
-          TEST_MESSAGES = {
-              'empty': '',
-              'single_char': 'X',
-              'whitespace': '   \t\n   ',
-              'numbers': '1234567890',
-              'punctuation': '!@#\$%^&*()_+-=[]{}\\|;\':\",./<>?',
-              'newlines': 'Line 1\nLine 2\nLine 3',
-              'emoji_simple': 'Hello 👋 World 🌍',
-              'emoji_zwj': 'Family: 👨‍👩‍👧‍👦',
-              'chinese': '你好世界 - Hello World',
-              'arabic': 'مرحبا بالعالم',
-              'japanese': 'こんにちは世界 カタカナ 漢字',
-              'korean': '안녕하세요 세계',
-              'accents': 'Café résumé naïve',
-              'cyrillic': 'Привет мир',
-              'json': '{\"key\": \"value\", \"num\": 42}',
-              'html': '<div class=\"test\">Content</div>',
-              'url': 'https://example.com/path?q=test&lang=en',
-              'code': 'func hello() { print(\"Hi\") }',
-              'long_text': 'The quick brown fox jumps over the lazy dog. ' * 11,
-              'max_payload': 'A' * 882,
-          }
-
-          implementations = ['swift', 'ts', 'python', 'rust', 'kotlin']
-          total_passed = 0
-          total_failed = 0
-
-          for impl in implementations:
-              dir_path = f'../test-envelopes-{impl}'
-              if not os.path.exists(dir_path):
-                  print(f'⚠ {impl}: directory not found, skipping')
-                  continue
-
-              passed = 0
-              failed = 0
-              for key, expected in TEST_MESSAGES.items():
-                  file_path = f'{dir_path}/{key}.hex'
-                  if not os.path.exists(file_path):
-                      continue
-                  try:
-                      with open(file_path, 'r') as f:
-                          hex_data = f.read().strip()
-                      envelope_bytes = bytes.fromhex(hex_data)
-                      if not is_chat_message(envelope_bytes):
-                          failed += 1
-                          continue
-                      envelope = Envelope.decode(envelope_bytes)
-                      result = Crypto.decrypt_message(envelope, bob_private, bob_public)
-                      if result and result.text == expected:
-                          passed += 1
-                      else:
-                          failed += 1
-                  except Exception as e:
-                      failed += 1
-
-              print(f'{impl}: {passed}/{passed+failed} passed')
-              total_passed += passed
-              total_failed += failed
-
-          print(f'\\nTotal: {total_passed}/{total_passed+total_failed} passed')
-          if total_failed > 0:
-              exit(1)
-          "
+          PYTHONPATH=src python ../scripts/python_cross_impl.py verify
 
       - name: Rust verifies all implementations
         run: |

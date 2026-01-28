@@ -8,7 +8,7 @@ let package = Package(
         .macOS(.v12)
     ],
     dependencies: [
-        .package(url: "https://github.com/CorvidLabs/swift-algochat.git", exact: "0.2.0"),
+        .package(path: "../_packages/swift/swift-algochat"),
         .package(url: "https://github.com/CorvidLabs/swift-algokit.git", from: "0.0.2")
     ],
     targets: [

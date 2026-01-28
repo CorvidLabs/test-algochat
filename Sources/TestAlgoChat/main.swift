@@ -675,9 +675,17 @@ private func runPSKCryptoTests() async throws {
 
         let sortedKeys = TestVectors.testMessages.keys.sorted()
         var exportCount = 0
+        var skipped = 0
 
         for (index, key) in sortedKeys.enumerated() {
             let message = TestVectors.testMessages[key]!
+            let messageBytes = Array(message.utf8)
+            if messageBytes.count > TestVectors.pskMaxPayloadSize {
+                print("  SKIP: \(key) (\(messageBytes.count) bytes > PSK max \(TestVectors.pskMaxPayloadSize))")
+                skipped += 1
+                continue
+            }
+
             let counter = UInt32(index)
             let currentPSK = PSKRatchet.derivePSKAtCounter(initialPSK: testPSK, counter: counter)
 
@@ -695,7 +703,7 @@ private func runPSKCryptoTests() async throws {
             exportCount += 1
         }
 
-        print("  Exported \(exportCount) PSK envelopes to \(outputDir)/")
+        print("  Exported \(exportCount) PSK envelopes to \(outputDir)/ (\(skipped) skipped)")
         print("  \u{2713} PSK export completed")
         passed += 1
     } catch {
@@ -715,10 +723,18 @@ private func runPSKCryptoTests() async throws {
 
         var multiPassed = 0
         var multiFailed = 0
+        var multiSkipped = 0
         let sortedKeys = TestVectors.testMessages.keys.sorted()
 
         for (index, key) in sortedKeys.enumerated() {
             let message = TestVectors.testMessages[key]!
+            let messageBytes = Array(message.utf8)
+            if messageBytes.count > TestVectors.pskMaxPayloadSize {
+                print("  SKIP: \(key) (\(messageBytes.count) bytes > PSK max \(TestVectors.pskMaxPayloadSize))")
+                multiSkipped += 1
+                continue
+            }
+
             let counter = UInt32(index)
             let currentPSK = PSKRatchet.derivePSKAtCounter(initialPSK: testPSK, counter: counter)
 
@@ -756,7 +772,8 @@ private func runPSKCryptoTests() async throws {
             }
         }
 
-        print("  PSK multi-message: \(multiPassed)/\(TestVectors.testMessages.count) passed")
+        let total = TestVectors.testMessages.count - multiSkipped
+        print("  PSK multi-message: \(multiPassed)/\(total) passed (\(multiSkipped) skipped)")
         if multiFailed > 0 {
             throw TestError.testsFailed(multiFailed)
         }

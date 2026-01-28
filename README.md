@@ -57,6 +57,26 @@ Each implementation is tested for:
 4. **Bidirectional** - Senders can decrypt their own messages
 5. **Cross-implementation** - Each implementation can decrypt envelopes from all others
 
+### PSK v1.1 Protocol Tests
+
+| Test | Description |
+|------|-------------|
+| Ratchet vectors | HKDF derivation matches reference (session/position/counter) |
+| Envelope encode/decode | PSK envelope wire format round-trip (130-byte header) |
+| Encrypt/decrypt | PSK message encryption and decryption |
+| Bidirectional | Sender can decrypt own PSK messages |
+| Cross-implementation | Each implementation decrypts PSK envelopes from all others |
+
+#### PSK Ratchet Test Vectors
+
+Initial PSK: 32 bytes of `0xAA`
+
+| Counter | Session | Position | Expected PSK |
+|---------|---------|----------|-------------|
+| 0 | 0 | 0 | `2918fd48...` |
+| 99 | 0 | 99 | `5b48a50a...` |
+| 100 | 1 | 0 | `7a15d3ad...` |
+
 ## Running Tests
 
 ### Crypto Tests (Offline)
@@ -127,6 +147,61 @@ AlgoChat uses:
 | 78-125 | 48 | Encrypted sender key |
 | 126+ | var | Ciphertext + 16-byte tag |
 
+### PSK v1.1 Protocol
+
+AlgoChat PSK adds pre-shared key support with a two-level ratchet:
+
+- **Session PSK** - Derived from initial PSK + session index (counter / 100)
+- **Position PSK** - Derived from session PSK + position (counter % 100)
+- **Hybrid encryption** - IKM = sharedSecret || currentPSK
+
+#### PSK Envelope Format (130-byte header + ciphertext)
+
+| Offset | Size | Field |
+|--------|------|-------|
+| 0 | 1 | Version (0x01) |
+| 1 | 1 | Protocol ID (0x02) |
+| 2-5 | 4 | Ratchet counter (big-endian uint32) |
+| 6-37 | 32 | Sender public key |
+| 38-69 | 32 | Ephemeral public key |
+| 70-81 | 12 | Nonce |
+| 82-129 | 48 | Encrypted sender key |
+| 130+ | var | Ciphertext + 16-byte tag |
+
+#### PSK HKDF Parameters
+
+| Parameter | Value |
+|-----------|-------|
+| Session salt | `AlgoChat-PSK-Session` |
+| Position salt | `AlgoChat-PSK-Position` |
+| Hybrid info prefix | `AlgoChatV1-PSK` |
+| Sender key info prefix | `AlgoChatV1-PSK-SenderKey` |
+| Session size | 100 counters |
+| Counter window | 200 |
+
+#### PSK Ratchet Test Vectors (initial PSK = 32 bytes of 0xAA)
+
+| Counter | Expected PSK |
+|---------|-------------|
+| Session 0 | `a031707ea9e9e50bd8ea4eb9a2bd368465ea1aff14caab293d38954b4717e888` |
+| Session 1 | `994cffbb4f84fa5410d44574bb9fa7408a8c2f1ed2b3a00f5168fc74c71f7cea` |
+| Counter 0 | `2918fd486b9bd024d712f6234b813c0f4167237d60c2c1fca37326b20497c165` |
+| Counter 99 | `5b48a50a25261f6b63fe9c867b46be46de4d747c3477db6290045ba519a4d38b` |
+| Counter 100 | `7a15d3add6a28858e6a1f1ea0d22bdb29b7e129a1330c4908d9b46a460992694` |
+
+### Running PSK Tests
+
+```bash
+# Swift PSK tests
+swift run TestAlgoChat psk
+
+# TypeScript PSK tests
+bun test ts/crypto.test.ts --grep "PSK"
+
+# All tests (includes PSK)
+./tests/run-all.sh crypto
+```
+
 ## File Structure
 
 ```
@@ -158,6 +233,11 @@ During test runs, these directories are created:
 | `test-envelopes-swift/` | Swift-encrypted envelopes (20 messages) |
 | `test-envelopes-ts/` | TypeScript-encrypted envelopes (20 messages) |
 | `test-envelopes-python/` | Python-encrypted envelopes (20 messages) |
+| `test-envelopes-swift-psk/` | Swift PSK-encrypted envelopes (20 messages) |
+| `test-envelopes-ts-psk/` | TypeScript PSK-encrypted envelopes (20 messages) |
+| `test-envelopes-py-psk/` | Python PSK-encrypted envelopes (20 messages) |
+| `test-envelopes-rs-psk/` | Rust PSK-encrypted envelopes (20 messages) |
+| `test-envelopes-kt-psk/` | Kotlin PSK-encrypted envelopes (20 messages) |
 
 ## CI/CD
 

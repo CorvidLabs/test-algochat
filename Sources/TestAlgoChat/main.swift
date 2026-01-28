@@ -21,6 +21,8 @@ struct TestAlgoChatCLI {
             try await runLocalnetTests()
         case "vectors":
             try printTestVectors()
+        case "psk":
+            try await runPSKCryptoTests()
         case "all":
             try await runAllTests()
         default:
@@ -37,6 +39,7 @@ struct TestAlgoChatCLI {
           cross-impl - Verify decryption of envelopes from all implementations
           localnet   - Run integration tests (requires localnet)
           vectors    - Print computed test vectors
+          psk        - Run PSK v1.1 protocol tests (offline)
           all        - Run all tests
 
         """)
@@ -464,6 +467,315 @@ private func runCryptoTests() async throws {
     }
 }
 
+// MARK: - PSK Crypto Tests
+
+private func runPSKCryptoTests() async throws {
+    print("=== Swift PSK v1.1 Tests ===\n")
+
+    var passed = 0
+    var failed = 0
+
+    // Test 1: PSK Ratchet Vectors
+    print("Test 1: PSK Ratchet Vectors")
+    do {
+        guard let initialPSK = Data(hexString: TestVectors.pskTestInitialPSKHex) else {
+            throw TestError.assertion("Failed to decode initial PSK hex")
+        }
+
+        // Session 0
+        let session0 = PSKRatchet.deriveSessionPSK(initialPSK: initialPSK, sessionIndex: 0)
+        guard session0.hexString == TestVectors.pskTestSession0Hex else {
+            throw TestError.assertion("Session 0 mismatch: \(session0.hexString)")
+        }
+        print("  \u{2713} Session 0: \(session0.hexString)")
+
+        // Session 1
+        let session1 = PSKRatchet.deriveSessionPSK(initialPSK: initialPSK, sessionIndex: 1)
+        guard session1.hexString == TestVectors.pskTestSession1Hex else {
+            throw TestError.assertion("Session 1 mismatch: \(session1.hexString)")
+        }
+        print("  \u{2713} Session 1: \(session1.hexString)")
+
+        // Counter 0 (session 0, position 0)
+        let counter0 = PSKRatchet.derivePSKAtCounter(initialPSK: initialPSK, counter: 0)
+        guard counter0.hexString == TestVectors.pskTestCounter0Hex else {
+            throw TestError.assertion("Counter 0 mismatch: \(counter0.hexString)")
+        }
+        print("  \u{2713} Counter 0: \(counter0.hexString)")
+
+        // Counter 99 (session 0, position 99)
+        let counter99 = PSKRatchet.derivePSKAtCounter(initialPSK: initialPSK, counter: 99)
+        guard counter99.hexString == TestVectors.pskTestCounter99Hex else {
+            throw TestError.assertion("Counter 99 mismatch: \(counter99.hexString)")
+        }
+        print("  \u{2713} Counter 99: \(counter99.hexString)")
+
+        // Counter 100 (session 1, position 0)
+        let counter100 = PSKRatchet.derivePSKAtCounter(initialPSK: initialPSK, counter: 100)
+        guard counter100.hexString == TestVectors.pskTestCounter100Hex else {
+            throw TestError.assertion("Counter 100 mismatch: \(counter100.hexString)")
+        }
+        print("  \u{2713} Counter 100: \(counter100.hexString)")
+
+        passed += 1
+    } catch {
+        print("  \u{2717} FAILED: \(error)")
+        failed += 1
+    }
+
+    // Test 2: PSK Envelope Encoding/Decoding
+    print("\nTest 2: PSK Envelope Encoding/Decoding")
+    do {
+        let (alicePrivateKey, _) = try TestVectors.aliceKeys()
+        let (_, bobPublicKey) = try TestVectors.bobKeys()
+
+        guard let testPSK = Data(hexString: TestVectors.pskTestInitialPSKHex) else {
+            throw TestError.assertion("Failed to decode test PSK")
+        }
+
+        let currentPSK = PSKRatchet.derivePSKAtCounter(initialPSK: testPSK, counter: 0)
+
+        let envelope = try MessageEncryptor.encryptPSK(
+            message: TestVectors.simpleMessage,
+            senderPrivateKey: alicePrivateKey,
+            recipientPublicKey: bobPublicKey,
+            currentPSK: currentPSK,
+            ratchetCounter: 0
+        )
+
+        let encoded = envelope.encode()
+        print("  Encoded PSK envelope: \(encoded.count) bytes")
+        print("  Header: \(encoded.prefix(2).hexString)")
+        guard encoded[0] == 0x01 else {
+            throw TestError.assertion("Version mismatch")
+        }
+        guard encoded[1] == TestVectors.pskProtocolID else {
+            throw TestError.assertion("Protocol ID mismatch: expected \(TestVectors.pskProtocolID), got \(encoded[1])")
+        }
+        guard encoded.count >= TestVectors.pskHeaderSize + TestVectors.tagSize else {
+            throw TestError.assertion("Envelope too short")
+        }
+
+        let decoded = try PSKEnvelope.decode(from: encoded)
+        guard decoded.ratchetCounter == envelope.ratchetCounter else {
+            throw TestError.assertion("Counter mismatch")
+        }
+        guard decoded.senderPublicKey == envelope.senderPublicKey else {
+            throw TestError.assertion("Sender public key mismatch")
+        }
+        guard decoded.ephemeralPublicKey == envelope.ephemeralPublicKey else {
+            throw TestError.assertion("Ephemeral public key mismatch")
+        }
+        guard decoded.nonce == envelope.nonce else {
+            throw TestError.assertion("Nonce mismatch")
+        }
+        guard decoded.ciphertext == envelope.ciphertext else {
+            throw TestError.assertion("Ciphertext mismatch")
+        }
+
+        print("  \u{2713} PSK envelope encoding/decoding passed")
+        passed += 1
+    } catch {
+        print("  \u{2717} FAILED: \(error)")
+        failed += 1
+    }
+
+    // Test 3: PSK Encrypt/Decrypt Round Trip
+    print("\nTest 3: PSK Encrypt/Decrypt Round Trip")
+    do {
+        let (alicePrivateKey, _) = try TestVectors.aliceKeys()
+        let (bobPrivateKey, bobPublicKey) = try TestVectors.bobKeys()
+
+        guard let testPSK = Data(hexString: TestVectors.pskTestInitialPSKHex) else {
+            throw TestError.assertion("Failed to decode test PSK")
+        }
+
+        let currentPSK = PSKRatchet.derivePSKAtCounter(initialPSK: testPSK, counter: 0)
+
+        let envelope = try MessageEncryptor.encryptPSK(
+            message: TestVectors.simpleMessage,
+            senderPrivateKey: alicePrivateKey,
+            recipientPublicKey: bobPublicKey,
+            currentPSK: currentPSK,
+            ratchetCounter: 0
+        )
+
+        let decrypted = try MessageEncryptor.decryptPSK(
+            envelope: envelope,
+            recipientPrivateKey: bobPrivateKey,
+            currentPSK: currentPSK
+        )
+
+        guard let content = decrypted else {
+            throw TestError.assertion("Decryption returned nil")
+        }
+        guard content.text == TestVectors.simpleMessage else {
+            throw TestError.assertion("Message mismatch")
+        }
+
+        print("  \u{2713} PSK round trip passed")
+        passed += 1
+    } catch {
+        print("  \u{2717} FAILED: \(error)")
+        failed += 1
+    }
+
+    // Test 4: PSK Sender Decryption (Bidirectional)
+    print("\nTest 4: PSK Sender Decryption (Bidirectional)")
+    do {
+        let (alicePrivateKey, _) = try TestVectors.aliceKeys()
+        let (_, bobPublicKey) = try TestVectors.bobKeys()
+
+        guard let testPSK = Data(hexString: TestVectors.pskTestInitialPSKHex) else {
+            throw TestError.assertion("Failed to decode test PSK")
+        }
+
+        let currentPSK = PSKRatchet.derivePSKAtCounter(initialPSK: testPSK, counter: 0)
+
+        let envelope = try MessageEncryptor.encryptPSK(
+            message: TestVectors.simpleMessage,
+            senderPrivateKey: alicePrivateKey,
+            recipientPublicKey: bobPublicKey,
+            currentPSK: currentPSK,
+            ratchetCounter: 0
+        )
+
+        let decrypted = try MessageEncryptor.decryptPSK(
+            envelope: envelope,
+            recipientPrivateKey: alicePrivateKey,
+            currentPSK: currentPSK
+        )
+
+        guard let content = decrypted else {
+            throw TestError.assertion("Sender decryption returned nil")
+        }
+        guard content.text == TestVectors.simpleMessage else {
+            throw TestError.assertion("Message mismatch")
+        }
+
+        print("  \u{2713} PSK sender can decrypt own messages")
+        passed += 1
+    } catch {
+        print("  \u{2717} FAILED: \(error)")
+        failed += 1
+    }
+
+    // Test 5: Export PSK Test Envelopes
+    print("\nTest 5: Export PSK Test Envelopes for Cross-Implementation")
+    do {
+        let (alicePrivateKey, _) = try TestVectors.aliceKeys()
+        let (_, bobPublicKey) = try TestVectors.bobKeys()
+
+        guard let testPSK = Data(hexString: TestVectors.pskTestInitialPSKHex) else {
+            throw TestError.assertion("Failed to decode test PSK")
+        }
+
+        let outputDir = "test-envelopes-swift-psk"
+        try FileManager.default.createDirectory(atPath: outputDir, withIntermediateDirectories: true)
+
+        let sortedKeys = TestVectors.testMessages.keys.sorted()
+        var exportCount = 0
+
+        for (index, key) in sortedKeys.enumerated() {
+            let message = TestVectors.testMessages[key]!
+            let counter = UInt32(index)
+            let currentPSK = PSKRatchet.derivePSKAtCounter(initialPSK: testPSK, counter: counter)
+
+            let envelope = try MessageEncryptor.encryptPSK(
+                message: message,
+                senderPrivateKey: alicePrivateKey,
+                recipientPublicKey: bobPublicKey,
+                currentPSK: currentPSK,
+                ratchetCounter: counter
+            )
+
+            let encoded = envelope.encode()
+            let outputPath = "\(outputDir)/\(key).hex"
+            try encoded.hexString.write(toFile: outputPath, atomically: true, encoding: .utf8)
+            exportCount += 1
+        }
+
+        print("  Exported \(exportCount) PSK envelopes to \(outputDir)/")
+        print("  \u{2713} PSK export completed")
+        passed += 1
+    } catch {
+        print("  \u{2717} FAILED: \(error)")
+        failed += 1
+    }
+
+    // Test 6: Multi-Message PSK Round Trip
+    print("\nTest 6: Multi-Message PSK Round Trip (\(TestVectors.testMessages.count) messages)")
+    do {
+        let (alicePrivateKey, _) = try TestVectors.aliceKeys()
+        let (bobPrivateKey, bobPublicKey) = try TestVectors.bobKeys()
+
+        guard let testPSK = Data(hexString: TestVectors.pskTestInitialPSKHex) else {
+            throw TestError.assertion("Failed to decode test PSK")
+        }
+
+        var multiPassed = 0
+        var multiFailed = 0
+        let sortedKeys = TestVectors.testMessages.keys.sorted()
+
+        for (index, key) in sortedKeys.enumerated() {
+            let message = TestVectors.testMessages[key]!
+            let counter = UInt32(index)
+            let currentPSK = PSKRatchet.derivePSKAtCounter(initialPSK: testPSK, counter: counter)
+
+            do {
+                let envelope = try MessageEncryptor.encryptPSK(
+                    message: message,
+                    senderPrivateKey: alicePrivateKey,
+                    recipientPublicKey: bobPublicKey,
+                    currentPSK: currentPSK,
+                    ratchetCounter: counter
+                )
+
+                let decrypted = try MessageEncryptor.decryptPSK(
+                    envelope: envelope,
+                    recipientPrivateKey: bobPrivateKey,
+                    currentPSK: currentPSK
+                )
+
+                guard let content = decrypted else {
+                    throw TestError.assertion("Decryption returned nil for '\(key)'")
+                }
+
+                guard content.text == message else {
+                    throw TestError.assertion("Message mismatch for '\(key)'")
+                }
+
+                let displayMessage = message.count > 30 ? "\(message.prefix(30))..." : message
+                let displayEscaped = displayMessage.replacingOccurrences(of: "\n", with: "\\n")
+                    .replacingOccurrences(of: "\t", with: "\\t")
+                print("  \u{2713} \(key): \"\(displayEscaped)\"")
+                multiPassed += 1
+            } catch {
+                print("  \u{2717} \(key): FAILED - \(error)")
+                multiFailed += 1
+            }
+        }
+
+        print("  PSK multi-message: \(multiPassed)/\(TestVectors.testMessages.count) passed")
+        if multiFailed > 0 {
+            throw TestError.testsFailed(multiFailed)
+        }
+        passed += 1
+    } catch {
+        print("  \u{2717} FAILED: \(error)")
+        failed += 1
+    }
+
+    // Summary
+    print("\n=== PSK Test Summary ===")
+    print("Passed: \(passed)")
+    print("Failed: \(failed)")
+
+    if failed > 0 {
+        exit(1)
+    }
+}
+
 // MARK: - Cross-Implementation Tests
 
 private func runCrossImplTests() async throws {
@@ -627,6 +939,8 @@ private func runAllTests() async throws {
     try printTestVectors()
     print("\n")
     try await runCryptoTests()
+    print("\n")
+    try await runPSKCryptoTests()
     print("\n")
     try await runLocalnetTests()
 }

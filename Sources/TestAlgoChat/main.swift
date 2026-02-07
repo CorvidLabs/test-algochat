@@ -50,6 +50,7 @@ private func runCryptoTests() async throws {
 
     var passed = 0
     var failed = 0
+    var skipped = 0
 
     // Test 1: Key Derivation
     print("Test 1: Key Derivation from Seed")
@@ -338,7 +339,7 @@ private func runCryptoTests() async throws {
 
         guard FileManager.default.fileExists(atPath: envelopeDir) else {
             print("  SKIP: Run TypeScript tests first to generate envelopes")
-            passed += 1
+            skipped += 1
             throw TestError.assertion("skipped")
         }
 
@@ -400,7 +401,7 @@ private func runCryptoTests() async throws {
 
         guard FileManager.default.fileExists(atPath: envelopeDir) else {
             print("  SKIP: Run Python tests first to generate envelopes")
-            passed += 1
+            skipped += 1
             throw TestError.assertion("skipped")
         }
 
@@ -458,6 +459,7 @@ private func runCryptoTests() async throws {
     print("\n=== Summary ===")
     print("Passed: \(passed)")
     print("Failed: \(failed)")
+    print("Skipped: \(skipped)")
 
     if failed > 0 {
         exit(1)

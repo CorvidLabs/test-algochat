@@ -31,13 +31,8 @@ beforeAll(() => {
 });
 
 describe('Cross-Implementation Verification', () => {
-    test('decrypts Swift envelope', () => {
+    test.skipIf(!existsSync('test-envelope-swift.hex'))('decrypts Swift envelope', () => {
         const swiftEnvelopePath = 'test-envelope-swift.hex';
-        if (!existsSync(swiftEnvelopePath)) {
-            console.log('  SKIP: Run Swift tests first to generate envelope');
-            return;
-        }
-
         const hexContent = readFileSync(swiftEnvelopePath, 'utf-8').trim();
         const encoded = hexToBytes(hexContent);
 
@@ -58,13 +53,8 @@ describe('Cross-Implementation Verification', () => {
         console.log(`  Decrypted: "${decrypted!.text}"`);
     });
 
-    test('key derivation matches Swift', () => {
+    test.skipIf(!existsSync('test-envelope-swift.txt'))('key derivation matches Swift', () => {
         const vectorsPath = 'test-envelope-swift.txt';
-        if (!existsSync(vectorsPath)) {
-            console.log('  SKIP: Run Swift tests first to generate vectors');
-            return;
-        }
-
         const content = readFileSync(vectorsPath, 'utf-8');
 
         // Extract sender public key from Swift output
@@ -80,13 +70,8 @@ describe('Cross-Implementation Verification', () => {
         }
     });
 
-    test('batch verify all Swift envelopes', () => {
+    test.skipIf(!existsSync('test-envelopes-swift'))('batch verify all Swift envelopes', () => {
         const envelopeDir = 'test-envelopes-swift';
-        if (!existsSync(envelopeDir)) {
-            console.log('  SKIP: Run Swift tests first to generate envelopes');
-            return;
-        }
-
         const messageKeys = Object.keys(TEST_MESSAGES).sort();
         let passed = 0;
         let failed = 0;

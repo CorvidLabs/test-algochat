@@ -42,6 +42,15 @@ print_warning() {
     echo -e "${YELLOW}! $1${NC}"
 }
 
+print_skip() {
+    echo -e "${YELLOW}⊘ $1${NC}"
+}
+
+# Test result counters
+SUITES_PASSED=0
+SUITES_FAILED=0
+SUITES_SKIPPED=0
+
 # Check prerequisites
 check_prerequisites() {
     print_header "Checking Prerequisites"
@@ -166,15 +175,45 @@ main() {
         all)
             check_prerequisites
             install_deps
-            run_swift_crypto
-            run_ts_crypto
-            run_localnet_tests || true
-            print_header "Summary"
-            echo "Crypto tests: Complete"
-            if check_localnet; then
-                echo "Localnet tests: Complete"
+
+            if run_swift_crypto; then
+                SUITES_PASSED=$((SUITES_PASSED + 1))
             else
-                echo "Localnet tests: Skipped (localnet not running)"
+                SUITES_FAILED=$((SUITES_FAILED + 1))
+            fi
+
+            if run_ts_crypto; then
+                SUITES_PASSED=$((SUITES_PASSED + 1))
+            else
+                SUITES_FAILED=$((SUITES_FAILED + 1))
+            fi
+
+            if check_localnet; then
+                if run_localnet_tests; then
+                    SUITES_PASSED=$((SUITES_PASSED + 1))
+                else
+                    SUITES_FAILED=$((SUITES_FAILED + 1))
+                fi
+            else
+                SUITES_SKIPPED=$((SUITES_SKIPPED + 1))
+                print_skip "Localnet tests: Skipped (localnet not running)"
+            fi
+
+            print_header "Summary"
+            print_success "Passed: $SUITES_PASSED"
+            if [ "$SUITES_FAILED" -gt 0 ]; then
+                print_error "Failed: $SUITES_FAILED"
+            else
+                echo "Failed: $SUITES_FAILED"
+            fi
+            if [ "$SUITES_SKIPPED" -gt 0 ]; then
+                print_skip "Skipped: $SUITES_SKIPPED"
+            else
+                echo "Skipped: $SUITES_SKIPPED"
+            fi
+
+            if [ "$SUITES_FAILED" -gt 0 ]; then
+                exit 1
             fi
             ;;
         *)

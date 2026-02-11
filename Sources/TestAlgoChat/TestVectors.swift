@@ -117,6 +117,30 @@ public enum TestVectors {
     public static let encryptedSenderKeySize = 48
     public static let maxPayloadSize = 882
 
+    // MARK: - PSK Protocol Constants
+
+    public static let pskProtocolID: UInt8 = 0x02
+    public static let pskHeaderSize = 130
+    public static let pskMaxPayloadSize = 878
+    public static let pskSessionSize: UInt32 = 100
+    public static let pskCounterWindow: UInt32 = 200
+
+    // MARK: - PSK HKDF Constants
+
+    public static let pskSessionSalt = "AlgoChat-PSK-Session"
+    public static let pskPositionSalt = "AlgoChat-PSK-Position"
+    public static let pskHybridInfoPrefix = "AlgoChatV1-PSK"
+    public static let pskSenderKeyInfoPrefix = "AlgoChatV1-PSK-SenderKey"
+
+    // MARK: - PSK Ratchet Test Vectors (initial PSK = 32 bytes of 0xAA)
+
+    public static let pskTestInitialPSKHex = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    public static let pskTestSession0Hex = "a031707ea9e9e50bd8ea4eb9a2bd368465ea1aff14caab293d38954b4717e888"
+    public static let pskTestSession1Hex = "994cffbb4f84fa5410d44574bb9fa7408a8c2f1ed2b3a00f5168fc74c71f7cea"
+    public static let pskTestCounter0Hex = "2918fd486b9bd024d712f6234b813c0f4167237d60c2c1fca37326b20497c165"
+    public static let pskTestCounter99Hex = "5b48a50a25261f6b63fe9c867b46be46de4d747c3477db6290045ba519a4d38b"
+    public static let pskTestCounter100Hex = "7a15d3add6a28858e6a1f1ea0d22bdb29b7e129a1330c4908d9b46a460992694"
+
     // MARK: - Localnet Configuration
 
     public static let algodURL = "http://localhost:4001"

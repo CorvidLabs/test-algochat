@@ -17,10 +17,14 @@ import {
     UNICODE_MESSAGE,
     TEST_MESSAGES,
     PROTOCOL,
+    PSK_RATCHET_VECTORS,
+    PSK_HKDF,
     bytesToHex,
     hexToBytes,
     bytesEqual,
 } from './test-vectors';
+import { hkdf } from '@noble/hashes/hkdf';
+import { sha256 } from '@noble/hashes/sha256';
 import { readFileSync, existsSync, writeFileSync } from 'fs';
 
 // Derived keys (computed in beforeAll)
@@ -471,6 +475,70 @@ describe('Multi-Message Tests', () => {
 
         console.log(`  Kotlin cross-impl verification: ${passed} passed, ${failed} failed, ${skipped} skipped (of ${messageKeys.length})`);
         expect(failed).toBe(0);
+    });
+});
+
+describe('PSK Ratchet Vectors', () => {
+    test('derives correct session and position PSKs', () => {
+        const initialPSK = hexToBytes(PSK_RATCHET_VECTORS.initialPSK);
+
+        // Session 0
+        const session0Info = new Uint8Array(4); // 0 as 4-byte big-endian
+        const session0 = hkdf(
+            sha256,
+            initialPSK,
+            new TextEncoder().encode(PSK_HKDF.SESSION_SALT),
+            session0Info,
+            32
+        );
+        expect(bytesToHex(session0)).toBe(PSK_RATCHET_VECTORS.session0);
+
+        // Session 1
+        const session1Info = new Uint8Array(4);
+        new DataView(session1Info.buffer).setUint32(0, 1, false); // big-endian
+        const session1 = hkdf(
+            sha256,
+            initialPSK,
+            new TextEncoder().encode(PSK_HKDF.SESSION_SALT),
+            session1Info,
+            32
+        );
+        expect(bytesToHex(session1)).toBe(PSK_RATCHET_VECTORS.session1);
+
+        // Counter 0 = session 0, position 0
+        const pos0Info = new Uint8Array(4); // all zeros = 0 big-endian
+        const counter0 = hkdf(
+            sha256,
+            session0,
+            new TextEncoder().encode(PSK_HKDF.POSITION_SALT),
+            pos0Info,
+            32
+        );
+        expect(bytesToHex(counter0)).toBe(PSK_RATCHET_VECTORS.counter0);
+
+        // Counter 99 = session 0, position 99
+        const pos99Info = new Uint8Array(4);
+        new DataView(pos99Info.buffer).setUint32(0, 99, false);
+        const counter99 = hkdf(
+            sha256,
+            session0,
+            new TextEncoder().encode(PSK_HKDF.POSITION_SALT),
+            pos99Info,
+            32
+        );
+        expect(bytesToHex(counter99)).toBe(PSK_RATCHET_VECTORS.counter99);
+
+        // Counter 100 = session 1, position 0
+        const counter100 = hkdf(
+            sha256,
+            session1,
+            new TextEncoder().encode(PSK_HKDF.POSITION_SALT),
+            pos0Info,
+            32
+        );
+        expect(bytesToHex(counter100)).toBe(PSK_RATCHET_VECTORS.counter100);
+
+        console.log('  PSK ratchet vectors verified against reference');
     });
 });
 

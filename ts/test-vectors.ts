@@ -97,6 +97,35 @@ export const PROTOCOL = {
     MAX_PAYLOAD_SIZE: 882,
 };
 
+// PSK Protocol constants
+export const PSK_PROTOCOL = {
+    PROTOCOL_ID: 0x02,
+    HEADER_SIZE: 130,
+    MAX_PAYLOAD_SIZE: 878,
+    SESSION_SIZE: 100,
+    COUNTER_WINDOW: 200,
+    TAG_SIZE: 16,
+    ENCRYPTED_SENDER_KEY_SIZE: 48,
+};
+
+// PSK HKDF constants
+export const PSK_HKDF = {
+    SESSION_SALT: 'AlgoChat-PSK-Session',
+    POSITION_SALT: 'AlgoChat-PSK-Position',
+    HYBRID_INFO_PREFIX: 'AlgoChatV1-PSK',
+    SENDER_KEY_INFO_PREFIX: 'AlgoChatV1-PSK-SenderKey',
+};
+
+// PSK Ratchet test vectors (initial PSK = 32 bytes of 0xAA)
+export const PSK_RATCHET_VECTORS = {
+    initialPSK: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    session0: 'a031707ea9e9e50bd8ea4eb9a2bd368465ea1aff14caab293d38954b4717e888',
+    session1: '994cffbb4f84fa5410d44574bb9fa7408a8c2f1ed2b3a00f5168fc74c71f7cea',
+    counter0: '2918fd486b9bd024d712f6234b813c0f4167237d60c2c1fca37326b20497c165',
+    counter99: '5b48a50a25261f6b63fe9c867b46be46de4d747c3477db6290045ba519a4d38b',
+    counter100: '7a15d3add6a28858e6a1f1ea0d22bdb29b7e129a1330c4908d9b46a460992694',
+};
+
 // Localnet configuration
 export const LOCALNET = {
     ALGOD_URL: 'http://localhost:4001',

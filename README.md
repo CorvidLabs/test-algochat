@@ -19,6 +19,13 @@ This repository contains comprehensive tests to verify that all AlgoChat impleme
 ## Quick Start
 
 ```bash
+# Clone with submodules (required for Python, Rust, and Kotlin implementations)
+git clone --recurse-submodules https://github.com/CorvidLabs/test-algochat.git
+cd test-algochat
+
+# If you already cloned without --recurse-submodules:
+git submodule update --init --recursive
+
 # Run all offline crypto tests
 ./tests/run-all.sh crypto
 
@@ -26,6 +33,29 @@ This repository contains comprehensive tests to verify that all AlgoChat impleme
 algokit localnet start
 ./tests/run-all.sh all
 algokit localnet stop
+```
+
+## Git Submodules
+
+This repository uses git submodules to include the Python, Rust, Kotlin, and TypeScript implementation repositories:
+
+| Submodule | Path | Repository |
+|-----------|------|------------|
+| py-algochat | `py-algochat/` | [CorvidLabs/py-algochat](https://github.com/CorvidLabs/py-algochat) |
+| rs-algochat | `rs-algochat/` | [CorvidLabs/rs-algochat](https://github.com/CorvidLabs/rs-algochat) |
+| kt-algochat | `kt-algochat/` | [CorvidLabs/kt-algochat](https://github.com/CorvidLabs/kt-algochat) |
+| ts-algochat | `ts-algochat/` | [CorvidLabs/ts-algochat](https://github.com/CorvidLabs/ts-algochat) |
+
+You must initialize submodules before running Python, Rust, or Kotlin tests. If the submodule directories are empty, run:
+
+```bash
+git submodule update --init --recursive
+```
+
+To pull the latest changes from all submodules:
+
+```bash
+git submodule update --remote --merge
 ```
 
 ## Prerequisites

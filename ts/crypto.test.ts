@@ -58,14 +58,8 @@ describe('Key Derivation', () => {
         expect(bobKeys.publicKey.length).toBe(32);
     });
 
-    test('matches Swift key derivation (if available)', () => {
-        // Check if Swift test vectors file exists
+    test.skipIf(!existsSync('test-envelope-swift.txt'))('matches Swift key derivation (if available)', () => {
         const vectorsPath = 'test-envelope-swift.txt';
-        if (!existsSync(vectorsPath)) {
-            console.log('  Skipping - run Swift tests first to generate vectors');
-            return;
-        }
-
         const content = readFileSync(vectorsPath, 'utf-8');
         const senderPubKeyMatch = content.match(/senderPubKey: ([a-f0-9]+)/);
 
@@ -219,13 +213,8 @@ describe('Encryption/Decryption', () => {
 });
 
 describe('Cross-Implementation', () => {
-    test('decrypt Swift envelope', () => {
+    test.skipIf(!existsSync('test-envelope-swift.hex'))('decrypt Swift envelope', () => {
         const swiftEnvelopePath = 'test-envelope-swift.hex';
-        if (!existsSync(swiftEnvelopePath)) {
-            console.log('  Skipping - run Swift tests first to generate envelope');
-            return;
-        }
-
         const hexContent = readFileSync(swiftEnvelopePath, 'utf-8').trim();
         const encoded = hexToBytes(hexContent);
 
@@ -332,20 +321,17 @@ describe('Multi-Message Tests', () => {
         console.log(`  Exported ${exportCount} envelopes to ${outputDir}/`);
     });
 
-    test('decrypt all Swift envelopes', () => {
+    test.skipIf(!existsSync('test-envelopes-swift'))('decrypt all Swift envelopes', () => {
         const envelopeDir = 'test-envelopes-swift';
-        if (!existsSync(envelopeDir)) {
-            console.log('  SKIP: Run Swift tests first to generate envelopes');
-            return;
-        }
-
         let passed = 0;
         let failed = 0;
+        let skipped = 0;
 
         for (const key of messageKeys) {
             const envelopePath = `${envelopeDir}/${key}.hex`;
             if (!existsSync(envelopePath)) {
                 console.log(`  SKIP: ${key} - envelope not found`);
+                skipped++;
                 continue;
             }
 
@@ -372,24 +358,21 @@ describe('Multi-Message Tests', () => {
             }
         }
 
-        console.log(`  Cross-impl verification: ${passed}/${messageKeys.length} passed`);
+        console.log(`  Cross-impl verification: ${passed} passed, ${failed} failed, ${skipped} skipped (of ${messageKeys.length})`);
         expect(failed).toBe(0);
     });
 
-    test('decrypt all Python envelopes', () => {
+    test.skipIf(!existsSync('test-envelopes-python'))('decrypt all Python envelopes', () => {
         const envelopeDir = 'test-envelopes-python';
-        if (!existsSync(envelopeDir)) {
-            console.log('  SKIP: Run Python tests first to generate envelopes');
-            return;
-        }
-
         let passed = 0;
         let failed = 0;
+        let skipped = 0;
 
         for (const key of messageKeys) {
             const envelopePath = `${envelopeDir}/${key}.hex`;
             if (!existsSync(envelopePath)) {
                 console.log(`  SKIP: ${key} - envelope not found`);
+                skipped++;
                 continue;
             }
 
@@ -416,23 +399,20 @@ describe('Multi-Message Tests', () => {
             }
         }
 
-        console.log(`  Python cross-impl verification: ${passed}/${messageKeys.length} passed`);
+        console.log(`  Python cross-impl verification: ${passed} passed, ${failed} failed, ${skipped} skipped (of ${messageKeys.length})`);
         expect(failed).toBe(0);
     });
 
-    test('decrypt all Rust envelopes', () => {
+    test.skipIf(!existsSync('test-envelopes-rust'))('decrypt all Rust envelopes', () => {
         const envelopeDir = 'test-envelopes-rust';
-        if (!existsSync(envelopeDir)) {
-            console.log('  SKIP: Run Rust tests first to generate envelopes');
-            return;
-        }
-
         let passed = 0;
         let failed = 0;
+        let skipped = 0;
 
         for (const key of messageKeys) {
             const envelopePath = `${envelopeDir}/${key}.hex`;
             if (!existsSync(envelopePath)) {
+                skipped++;
                 continue;
             }
 
@@ -454,23 +434,20 @@ describe('Multi-Message Tests', () => {
             }
         }
 
-        console.log(`  Rust cross-impl verification: ${passed}/${passed + failed} passed`);
+        console.log(`  Rust cross-impl verification: ${passed} passed, ${failed} failed, ${skipped} skipped (of ${messageKeys.length})`);
         expect(failed).toBe(0);
     });
 
-    test('decrypt all Kotlin envelopes', () => {
+    test.skipIf(!existsSync('test-envelopes-kotlin'))('decrypt all Kotlin envelopes', () => {
         const envelopeDir = 'test-envelopes-kotlin';
-        if (!existsSync(envelopeDir)) {
-            console.log('  SKIP: Run Kotlin tests first to generate envelopes');
-            return;
-        }
-
         let passed = 0;
         let failed = 0;
+        let skipped = 0;
 
         for (const key of messageKeys) {
             const envelopePath = `${envelopeDir}/${key}.hex`;
             if (!existsSync(envelopePath)) {
+                skipped++;
                 continue;
             }
 
@@ -492,7 +469,7 @@ describe('Multi-Message Tests', () => {
             }
         }
 
-        console.log(`  Kotlin cross-impl verification: ${passed}/${passed + failed} passed`);
+        console.log(`  Kotlin cross-impl verification: ${passed} passed, ${failed} failed, ${skipped} skipped (of ${messageKeys.length})`);
         expect(failed).toBe(0);
     });
 });
@@ -501,14 +478,19 @@ describe('cross-impl', () => {
     const messageKeys = Object.keys(TEST_MESSAGES).sort();
     const implementations = ['swift', 'ts', 'python', 'rust', 'kotlin'];
 
-    test('verify all implementations', () => {
+    // Only run this test if at least one implementation's envelope directory exists
+    const hasAnyEnvelopes = implementations.some(impl => existsSync(`test-envelopes-${impl}`));
+
+    test.skipIf(!hasAnyEnvelopes)('verify all implementations', () => {
         let totalPassed = 0;
         let totalFailed = 0;
+        let totalSkipped = 0;
 
         for (const impl of implementations) {
             const envelopeDir = `test-envelopes-${impl}`;
             if (!existsSync(envelopeDir)) {
                 console.log(`${impl}: SKIP - directory not found`);
+                totalSkipped++;
                 continue;
             }
 
@@ -543,7 +525,7 @@ describe('cross-impl', () => {
             totalFailed += failed;
         }
 
-        console.log(`\nTotal: ${totalPassed}/${totalPassed + totalFailed} passed`);
+        console.log(`\nTotal: ${totalPassed} passed, ${totalFailed} failed, ${totalSkipped} impl(s) skipped`);
         expect(totalFailed).toBe(0);
     });
 });

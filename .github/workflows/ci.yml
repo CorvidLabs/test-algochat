@@ -189,11 +189,22 @@ jobs:
           echo "=== Generating TypeScript envelopes ==="
           bun test ts/crypto.test.ts
 
+      - name: Generate TypeScript PSK envelopes
+        run: |
+          echo "=== Generating TypeScript PSK envelopes ==="
+          bun test ts/psk.test.ts
+
       - name: Generate Python envelopes
         run: |
           echo "=== Generating Python envelopes ==="
           cd py-algochat
           PYTHONPATH=src python ../scripts/python_cross_impl.py export ../test-envelopes-python
+
+      - name: Generate Python PSK envelopes
+        run: |
+          echo "=== Generating Python PSK envelopes ==="
+          cd py-algochat
+          PYTHONPATH=src python ../scripts/python_psk_cross_impl.py export ../test-envelopes-python-psk
 
       - name: Generate Rust envelopes
         run: |
@@ -218,11 +229,22 @@ jobs:
           echo "=== TypeScript decrypting envelopes from all implementations ==="
           bun test ts/crypto.test.ts --test-name-pattern "cross-impl"
 
+      - name: TypeScript verifies all PSK implementations
+        run: |
+          echo "=== TypeScript decrypting PSK envelopes from all implementations ==="
+          bun test ts/psk.test.ts --test-name-pattern "psk-cross-impl"
+
       - name: Python verifies all implementations
         run: |
           echo "=== Python decrypting envelopes from all implementations ==="
           cd py-algochat
           PYTHONPATH=src python ../scripts/python_cross_impl.py verify
+
+      - name: Python verifies all PSK implementations
+        run: |
+          echo "=== Python decrypting PSK envelopes from all implementations ==="
+          cd py-algochat
+          PYTHONPATH=src python ../scripts/python_psk_cross_impl.py verify
 
       - name: Rust verifies all implementations
         run: |
@@ -237,8 +259,11 @@ jobs:
           echo "Cross-Implementation Verification Summary"
           echo "========================================"
           echo ""
-          echo "Envelope directories:"
-          ls -la test-envelopes-* 2>/dev/null || echo "No envelope directories found"
+          echo "Standard (v1.0) envelope directories:"
+          ls -la test-envelopes-swift test-envelopes-ts test-envelopes-python test-envelopes-rust test-envelopes-kotlin 2>/dev/null || echo "  (none found)"
+          echo ""
+          echo "PSK (v1.1) envelope directories:"
+          ls -la test-envelopes-*-psk 2>/dev/null || echo "  (none found)"
           echo ""
           echo "Each implementation verified decryption of envelopes from:"
           echo "  - Swift"
@@ -246,6 +271,10 @@ jobs:
           echo "  - Python"
           echo "  - Rust"
           echo "  - Kotlin"
+          echo ""
+          echo "PSK cross-implementation verification:"
+          echo "  - TypeScript (PSK v1.1)"
+          echo "  - Python (PSK v1.1)"
 
       - name: Upload test artifacts
         uses: actions/upload-artifact@v4
@@ -257,5 +286,10 @@ jobs:
             test-envelopes-python/
             test-envelopes-rust/
             test-envelopes-kotlin/
+            test-envelopes-ts-psk/
+            test-envelopes-python-psk/
+            test-envelopes-swift-psk/
+            test-envelopes-rust-psk/
+            test-envelopes-kotlin-psk/
             report.html
           if-no-files-found: ignore

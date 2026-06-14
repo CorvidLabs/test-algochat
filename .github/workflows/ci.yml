@@ -3,17 +3,58 @@ name: Cross-Implementation Tests
 on:
   push:
     branches: [main]
+    paths:
+      - 'Sources/**'
+      - 'Tests/**'
+      - 'tests/**'
+      - 'Package.swift'
+      - 'Package.resolved'
+      - 'ts/**'
+      - 'scripts/**'
+      - 'package.json'
+      - 'bun.lock'
+      - 'tsconfig.json'
+      - 'test-vectors.json'
+      - 'py-algochat'
+      - 'rs-algochat'
+      - 'kt-algochat'
+      - 'ts-algochat'
+      - '.gitmodules'
+      - '.github/workflows/ci.yml'
   pull_request:
     branches: [main]
+    paths:
+      - 'Sources/**'
+      - 'Tests/**'
+      - 'tests/**'
+      - 'Package.swift'
+      - 'Package.resolved'
+      - 'ts/**'
+      - 'scripts/**'
+      - 'package.json'
+      - 'bun.lock'
+      - 'tsconfig.json'
+      - 'test-vectors.json'
+      - 'py-algochat'
+      - 'rs-algochat'
+      - 'kt-algochat'
+      - 'ts-algochat'
+      - '.gitmodules'
+      - '.github/workflows/ci.yml'
   workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   swift-tests:
     name: Swift Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Swift
         uses: swift-actions/setup-swift@v2
@@ -29,9 +70,10 @@ jobs:
   typescript-tests:
     name: TypeScript Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -53,12 +95,13 @@ jobs:
   python-tests:
     name: Python Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       matrix:
         python-version: ['3.10', '3.11', '3.12']
     steps:
       - name: Checkout with submodules
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
 
@@ -80,9 +123,10 @@ jobs:
   rust-tests:
     name: Rust Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout with submodules
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
 
@@ -97,9 +141,10 @@ jobs:
   kotlin-tests:
     name: Kotlin Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout with submodules
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
 
@@ -120,10 +165,11 @@ jobs:
   cross-implementation:
     name: Cross-Implementation Verification
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     needs: [swift-tests, typescript-tests, python-tests, rust-tests, kotlin-tests]
     steps:
       - name: Checkout with submodules
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
 

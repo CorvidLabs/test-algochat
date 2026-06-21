@@ -6,7 +6,7 @@
  */
 
 import { describe, test, expect, beforeAll } from 'bun:test';
-import { decryptMessage, decodeEnvelope, isChatMessage } from 'ts-algochat';
+import { decryptMessage, decodeEnvelope, isChatMessage } from '@corvidlabs/ts-algochat';
 import {
     getAliceKeys,
     getBobKeys,

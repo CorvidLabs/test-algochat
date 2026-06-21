@@ -5,7 +5,7 @@
  */
 
 import { describe, test, expect, beforeAll } from 'bun:test';
-import { encryptMessage, decryptMessage, encodeEnvelope, decodeEnvelope, isChatMessage } from 'ts-algochat';
+import { encryptMessage, decryptMessage, encodeEnvelope, decodeEnvelope, isChatMessage } from '@corvidlabs/ts-algochat';
 import {
     ALICE_SEED_HEX,
     BOB_SEED_HEX,
@@ -80,7 +80,6 @@ describe('Envelope Encoding', () => {
     test('encodes envelope with correct header', () => {
         const envelope = encryptMessage(
             SIMPLE_MESSAGE,
-            aliceKeys.privateKey,
             aliceKeys.publicKey,
             bobKeys.publicKey
         );
@@ -96,7 +95,6 @@ describe('Envelope Encoding', () => {
     test('encode/decode roundtrip', () => {
         const envelope = encryptMessage(
             SIMPLE_MESSAGE,
-            aliceKeys.privateKey,
             aliceKeys.publicKey,
             bobKeys.publicKey
         );
@@ -115,7 +113,6 @@ describe('Envelope Encoding', () => {
     test('isChatMessage detects valid envelopes', () => {
         const envelope = encryptMessage(
             SIMPLE_MESSAGE,
-            aliceKeys.privateKey,
             aliceKeys.publicKey,
             bobKeys.publicKey
         );
@@ -129,7 +126,6 @@ describe('Envelope Encoding', () => {
     test('export envelope for Swift comparison', () => {
         const envelope = encryptMessage(
             SIMPLE_MESSAGE,
-            aliceKeys.privateKey,
             aliceKeys.publicKey,
             bobKeys.publicKey
         );
@@ -160,7 +156,6 @@ describe('Encryption/Decryption', () => {
     test('encrypt/decrypt roundtrip', () => {
         const envelope = encryptMessage(
             SIMPLE_MESSAGE,
-            aliceKeys.privateKey,
             aliceKeys.publicKey,
             bobKeys.publicKey
         );
@@ -174,7 +169,6 @@ describe('Encryption/Decryption', () => {
     test('sender can decrypt own message', () => {
         const envelope = encryptMessage(
             SIMPLE_MESSAGE,
-            aliceKeys.privateKey,
             aliceKeys.publicKey,
             bobKeys.publicKey
         );
@@ -188,7 +182,6 @@ describe('Encryption/Decryption', () => {
     test('handles unicode messages', () => {
         const envelope = encryptMessage(
             UNICODE_MESSAGE,
-            aliceKeys.privateKey,
             aliceKeys.publicKey,
             bobKeys.publicKey
         );
@@ -202,7 +195,6 @@ describe('Encryption/Decryption', () => {
     test('wrong key fails to decrypt', () => {
         const envelope = encryptMessage(
             SIMPLE_MESSAGE,
-            aliceKeys.privateKey,
             aliceKeys.publicKey,
             bobKeys.publicKey
         );
@@ -253,7 +245,6 @@ describe('Multi-Message Tests', () => {
             try {
                 const envelope = encryptMessage(
                     message,
-                    aliceKeys.privateKey,
                     aliceKeys.publicKey,
                     bobKeys.publicKey
                 );
@@ -283,7 +274,6 @@ describe('Multi-Message Tests', () => {
 
             const envelope = encryptMessage(
                 message,
-                aliceKeys.privateKey,
                 aliceKeys.publicKey,
                 bobKeys.publicKey
             );
@@ -312,7 +302,6 @@ describe('Multi-Message Tests', () => {
 
             const envelope = encryptMessage(
                 message,
-                aliceKeys.privateKey,
                 aliceKeys.publicKey,
                 bobKeys.publicKey
             );

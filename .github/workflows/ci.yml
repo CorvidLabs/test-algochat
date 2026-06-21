@@ -85,7 +85,7 @@ jobs:
 
       - name: Build ts-algochat dependency
         run: |
-          cd node_modules/ts-algochat
+          cd node_modules/@corvidlabs/ts-algochat
           bun install
           bun run build
 
@@ -202,7 +202,7 @@ jobs:
       - name: Install TypeScript dependencies
         run: |
           bun install
-          cd node_modules/ts-algochat
+          cd node_modules/@corvidlabs/ts-algochat
           bun install
           bun run build
 

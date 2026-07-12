@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "id": "CHG-0001-adopt-specsync-5-0-1-and-the-unified-trust-1-0-0-governance-gate",
+  "slug": "adopt-specsync-5-0-1-and-the-unified-trust-1-0-0-governance-gate",
+  "title": "Adopt SpecSync 5.0.1 and the unified Trust 1.0.0 governance gate",
+  "description": "Adopt SpecSync 5.0.1 and the unified Trust 1.0.0 governance gate",
+  "kind": "migration",
+  "state": "draft",
+  "base_commit": "75597e70f551b88b0f2838e92def2858b9960992",
+  "created_at": 1783891794,
+  "updated_at": 1783891795,
+  "affected_specs": [],
+  "affected_paths": [
+    ".github/",
+    ".specsync/",
+    ".trust.toml",
+    "fledge.toml"
+  ],
+  "no_spec_change": true,
+  "no_spec_change_rationale": "This operational migration changes repository governance and verification only; it does not change product behavior or canonical requirements.",
+  "acceptance_criteria": [
+    "SpecSync 5.0.1 metadata and all four agent integrations are committed; the immutable Trust 1.0.0 action runs repository-native verification on pull requests; existing specialized workflows remain intact."
+  ],
+  "selected_artifacts": [
+    "context",
+    "research",
+    "design",
+    "plan",
+    "tasks",
+    "testing",
+    "docs"
+  ],
+  "dependencies": [],
+  "answers": {
+    "architecture_risk": "no",
+    "public_contract": "no"
+  }
+}

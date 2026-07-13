@@ -1,0 +1,9 @@
+[tasks.vectors]
+cmd = "python3 -m json.tool test-vectors.json"
+[tasks.registry]
+cmd = "git submodule status --cached"
+[tasks.integrity]
+cmd = "git diff --check"
+[lanes.verify]
+description = "Deterministic protocol-vector and implementation-registry verification"
+steps = ["vectors", "registry", "integrity"]

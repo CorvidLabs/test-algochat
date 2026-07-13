@@ -5,4 +5,4 @@ artifact: design
 
 # Design
 
-Trust uses the standard profile, blocking risk, progressive provenance, and an immutable 1.0.0 action pin. The lifecycle runs a non-recursive Fledge lane with deterministic protocol-vector and implementation-registry verification.
+One active contract maps the cohesive harness across three languages. Eight requirements separate vectors, standard protocol, PSK wire and crypto behavior, counters, artifact exchange, localnet, and reporting. Trust retains blocking risk, progressive provenance, disabled managed Atlas, and the immutable 1.0.0 pin.

@@ -5,7 +5,7 @@ artifact: tasks
 
 # Tasks
 
-- [x] Adopt SpecSync 5.0.1.
-- [x] Install Claude, Cursor, Codex, and Gemini integrations.
-- [x] Add immutable Trust configuration.
-- [ ] Record hosted evidence.
+- [x] Inventory all governed Swift, TypeScript, and Python sources and exports.
+- [x] Document standard, PSK, counter, artifact, localnet, and reporting contracts.
+- [x] Configure strict 100% coverage and deterministic Fledge verification.
+- [x] Install Claude, Cursor, Codex, and Gemini integrations and pin Trust immutably.

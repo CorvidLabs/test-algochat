@@ -5,4 +5,4 @@ artifact: research
 
 # Research
 
-No prior committed SpecSync coverage threshold exists, so adoption begins at advisory 0. Existing repository structure and workflows define the verification boundary.
+Source and README review identified twelve governed source files, standard and PSK protocol families, a counter-replay contract, localnet coverage, report generation, and cross-language artifact exchange. Existing specialized CI remains the authority for full language matrices.

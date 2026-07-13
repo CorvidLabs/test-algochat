@@ -5,4 +5,4 @@ artifact: docs
 
 # Docs
 
-No public product documentation changes are required. Governance is documented by the managed agent integrations, policy files, and draft lifecycle workspace.
+The existing README remains the public execution and protocol guide. The new canonical contract records the implementation boundaries and requirement evidence without changing those instructions.

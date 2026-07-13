@@ -1,3 +1,25 @@
 {
-  "approvals": []
+  "approvals": [
+    {
+      "gate": "definition",
+      "actor": "user:0xLeif",
+      "timestamp": 1783973601,
+      "digest": "2c1859b25a80197a12eb4e115cb3d790e57619e32f4fbd41a25c3e25cc346bc9",
+      "note": null
+    },
+    {
+      "gate": "definition",
+      "actor": "user:0xLeif",
+      "timestamp": 1783973661,
+      "digest": "1bff1f1fb2cbea0a4bb845710e849ba6ab54488ffc1930f43296c5662eab3dfc",
+      "note": null
+    },
+    {
+      "gate": "acceptance",
+      "actor": "user:0xLeif",
+      "timestamp": 1783973669,
+      "digest": "3914aeb53f00dedc4429c5ff9429e1bb1da621915e23e0e2cb9b1a2957ff830d",
+      "note": null
+    }
+  ]
 }

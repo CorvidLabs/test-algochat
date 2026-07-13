@@ -5,4 +5,4 @@ artifact: context
 
 # Context
 
-The repository is adopting the organization governance stack without changing product behavior. The unified lifecycle retains deterministic protocol-vector and implementation-registry verification.
+The repository verifies AlgoChat protocol agreement across Swift, TypeScript, Python, Rust, and Kotlin. The migration documents the existing harness, preserves all specialized CI and submodule workflows, and changes only governance and specification files.

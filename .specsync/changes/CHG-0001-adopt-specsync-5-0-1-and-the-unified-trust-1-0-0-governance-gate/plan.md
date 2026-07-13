@@ -5,4 +5,7 @@ artifact: plan
 
 # Plan
 
-1. Adopt SpecSync 5.0.1 and all four agents. 2. Add policy files and a verification lane. 3. Add Trust while preserving specialized workflows. 4. Validate locally and in hosted CI.
+1. Record every governed harness source and export in an active canonical contract.
+2. Assign stable implementation-backed requirements and exact verification evidence.
+3. Enable strict 100% coverage, all four agents, and the immutable Trust gate.
+4. Confirm local and hosted gates, existing specialized CI, review threads, and mergeability before merge.

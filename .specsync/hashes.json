@@ -1,34 +1,22 @@
 {
-  "format_version": 1,
   "hashes": {
-    ".specsync/config.toml": "d7b90818e7b08fe576ac8f733f7e3629c400dfb3caab86e5061d5c427e3f5186",
-    "Sources/TestAlgoChat/TestVectors.swift": "9b6269e8d79185df00cb88af4b3ef2e28b6c9c076de04787dc770307f2d902a2",
-    "Sources/TestAlgoChat/main.swift": "ba5889bd0f54372ea32b46dbf5b18d735030ca24a48b30bcfef9e424998cfb56",
-    "scripts/generate-report.ts": "455aa4ad746a94f9d5f5b1323052087e16fa6ffbd219cadd1226df1ca581d89f",
+    "ts/test-vectors.ts": "e90023fb4e63f71686370c7087fba4c80379e7bb57b79ea2f661d882e4a96d44",
     "scripts/python_cross_impl.py": "13cae546c71fa7699110706c289b04ef756f775fbe8ee9e23d690dc243cdbfca",
-    "scripts/python_psk_cross_impl.py": "a277fe3b01d9b6bc8c26578ede8869aec65b1af9b8e24e91d0abec5ad99ae2d9",
+    "Sources/TestAlgoChat/TestVectors.swift": "9b6269e8d79185df00cb88af4b3ef2e28b6c9c076de04787dc770307f2d902a2",
+    "scripts/generate-report.ts": "455aa4ad746a94f9d5f5b1323052087e16fa6ffbd219cadd1226df1ca581d89f",
+    "ts/crypto.test.ts": "6379661a941e180dda1b3d97281dcc266391b3328834656b265611b2cc2b640f",
+    ".specsync/config.toml": "d7b90818e7b08fe576ac8f733f7e3629c400dfb3caab86e5061d5c427e3f5186",
+    "Sources/TestAlgoChat/main.swift": "ba5889bd0f54372ea32b46dbf5b18d735030ca24a48b30bcfef9e424998cfb56",
     "specs/algochat-harness/algochat-harness.spec.md": "20bb384b78ebb9de360bb68741090580993a25f27d910156419ce09a9dbd09fe",
-    "specs/algochat-harness/context.md": "8f0fa2c481cd209df5358ce7c6017ffdd22c6d8c405ded135dc9a42a2252ef4e",
+    "ts/localnet.test.ts": "996990a852bd934f3279da45dfc53a0c88f20df8cf93bef068d92f1af0716d79",
+    "ts/psk.test.ts": "498c60290c2424f73c3d49d7fb309ee380c3e120a0a54b99776141c292cae77b",
+    "ts/psk-counter.ts": "3d0822ef054cdcace828358bfc61d05d2a0b047ca29a7a7d697195a675e28f2d",
+    "specs/algochat-harness/testing.md": "204c73f74bbb953b0031e02b1d5f2f39b6a4dac7200539895aacce7aa24bf0c9",
     "specs/algochat-harness/requirements.md": "9cb4c5a150f79d5837008c126904c3f6b66aa7d48ec96ecc95c4d828c251e738",
     "specs/algochat-harness/tasks.md": "354c2f0b941059d78547e0ce0cce1abc7420fd39ffebf290af838b7ea8538a44",
-    "specs/algochat-harness/testing.md": "204c73f74bbb953b0031e02b1d5f2f39b6a4dac7200539895aacce7aa24bf0c9",
-    "ts/crypto.test.ts": "6379661a941e180dda1b3d97281dcc266391b3328834656b265611b2cc2b640f",
-    "ts/localnet.test.ts": "996990a852bd934f3279da45dfc53a0c88f20df8cf93bef068d92f1af0716d79",
     "ts/psk-counter.test.ts": "8f0d9f5f05f476d5a45029e0775254d84fc4772c9049d72bdde83fae98298d39",
-    "ts/psk-counter.ts": "3d0822ef054cdcace828358bfc61d05d2a0b047ca29a7a7d697195a675e28f2d",
-    "ts/psk-crypto.ts": "7b49c5b23f756ff831b23ffb7cec3c44b77b3a51f96fb87e51a99ba940694daf",
-    "ts/psk.test.ts": "498c60290c2424f73c3d49d7fb309ee380c3e120a0a54b99776141c292cae77b",
-    "ts/test-vectors.ts": "e90023fb4e63f71686370c7087fba4c80379e7bb57b79ea2f661d882e4a96d44"
-  },
-  "snapshots": {
-    "specs/algochat-harness/algochat-harness.spec.md": {
-      "snapshot_version": 1,
-      "spec_path": "specs/algochat-harness/algochat-harness.spec.md",
-      "errors": [],
-      "warnings": [],
-      "notices": [],
-      "input_digest": "14df2d37200bc8b8ba508022d8a44aeafaf2ae88fd9b4f7c492de2b59bc64d4a",
-      "snapshot_digest": "68fe7a2b9d7175b67069b3951a6bea44544a4539facf340e5d20f436b638ebf9"
-    }
+    "specs/algochat-harness/context.md": "8f0fa2c481cd209df5358ce7c6017ffdd22c6d8c405ded135dc9a42a2252ef4e",
+    "scripts/python_psk_cross_impl.py": "a277fe3b01d9b6bc8c26578ede8869aec65b1af9b8e24e91d0abec5ad99ae2d9",
+    "ts/psk-crypto.ts": "7b49c5b23f756ff831b23ffb7cec3c44b77b3a51f96fb87e51a99ba940694daf"
   }
 }
